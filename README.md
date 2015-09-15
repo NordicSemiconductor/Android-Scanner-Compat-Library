@@ -1,5 +1,7 @@
 #Android BLE Scanner Compat library
 
+[ ![Download](https://api.bintray.com/packages/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/images/download.svg) ](https://bintray.com/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/_latestVersion)
+
 The Scanner Compat library solves the problem with scanning for Bluetooth Smart devices on Android. The scanner API has changed in the Android 5.0 and has been extended in 6.0. Using this library you may have all new features even on older phones. If a feature (for example offloaded filtering or batching) is not supported nativly, it will be emulated by the compat library. You may also disable the native support for filtering, batching and reporting first match or match lost if required.
 
 ## Usage
