@@ -33,7 +33,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class ScanFilter implements Parcelable {
+/**
+ * Criteria for filtering result from Bluetooth LE scans. A {@link ScanFilter} allows clients to
+ * restrict scan results to only those that are of interest to them.
+ * <p>
+ * Current filtering on the following fields are supported:
+ * <li>Service UUIDs which identify the bluetooth gatt services running on the device.
+ * <li>Name of remote Bluetooth LE device.
+ * <li>Mac address of the remote device.
+ * <li>Service data which is the data associated with a service.
+ * <li>Manufacturer specific data which is the data associated with a particular manufacturer.
+ *
+ * @see ScanResult
+ * @see BluetoothLeScannerCompat
+ */
+public final class ScanFilter implements Parcelable {
+
 	@Nullable
 	private final String mDeviceName;
 
@@ -342,6 +357,11 @@ public class ScanFilter implements Parcelable {
 
 	// Check whether the data pattern matches the parsed data.
 	private boolean matchesPartialData(byte[] data, byte[] dataMask, byte[] parsedData) {
+		if (data == null) {
+			// If filter data is null it means it doesn't matter.
+			// We return true if any data matching the manufacturerId were found.
+			return parsedData != null;
+		}
 		if (parsedData == null || parsedData.length < data.length) {
 			return false;
 		}
