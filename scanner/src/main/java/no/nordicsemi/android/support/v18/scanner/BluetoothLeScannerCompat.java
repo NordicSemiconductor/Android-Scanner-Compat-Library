@@ -245,7 +245,7 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void handleScanResult(final ScanResult scanResult) {
-			if (mFilters != null && !matches(scanResult))
+			if (mFilters != null && !mFilters.isEmpty() && !matches(scanResult))
 				return;
 
 			final String deviceAddress = scanResult.getDevice().getAddress();
