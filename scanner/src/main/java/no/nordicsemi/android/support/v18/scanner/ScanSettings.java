@@ -114,6 +114,13 @@ public class ScanSettings implements Parcelable {
 	 */
 	public static final int MATCH_MODE_STICKY = 2;
 
+	/**
+	 * Pre-Lollipop scanning requires a wakelock and the CPU cannot go to sleep. To conserve power we can optionally
+	 * scan for a certain duration (scan interval) and then rest for a time before starting scanning again
+	 */
+	private final long mPowerSaveScanInterval;
+	private final long mPowerSaveRestInterval;
+
 	// Bluetooth LE scan mode.
 	private int mScanMode;
 
@@ -189,7 +196,8 @@ public class ScanSettings implements Parcelable {
 	}
 
 	private ScanSettings(int scanMode, int callbackType, long reportDelayMillis, int matchMode, int numOfMatchesPerFilter,
-						 boolean hardwareFiltering, boolean hardwareBatching, boolean hardwareCallbackTypes, long matchTimeout, long taskInterval) {
+						 boolean hardwareFiltering, boolean hardwareBatching, boolean hardwareCallbackTypes, long matchTimeout, long taskInterval,
+						 long powerSaveScanInterval, long powerSaveRestInterval) {
 		mScanMode = scanMode;
 		mCallbackType = callbackType;
 		mReportDelayMillis = reportDelayMillis;
@@ -200,6 +208,8 @@ public class ScanSettings implements Parcelable {
 		mUseHardwareCallbackTypesIfSupported = hardwareCallbackTypes;
 		mMatchLostDeviceTimeout = matchTimeout * 1000000L; // convert to nanos
 		mMatchLostTaskInterval = taskInterval;
+		mPowerSaveScanInterval = powerSaveScanInterval;
+		mPowerSaveRestInterval = powerSaveRestInterval;
 	}
 
 	private ScanSettings(Parcel in) {
@@ -210,6 +220,8 @@ public class ScanSettings implements Parcelable {
 		mNumOfMatchesPerFilter = in.readInt();
 		mUseHardwareFilteringIfSupported = in.readInt() == 1;
 		mUseHardwareBatchingIfSupported = in.readInt() == 1;
+		mPowerSaveScanInterval = in.readLong();
+		mPowerSaveRestInterval = in.readLong();
 	}
 
 	@Override
@@ -221,6 +233,8 @@ public class ScanSettings implements Parcelable {
 		dest.writeInt(mNumOfMatchesPerFilter);
 		dest.writeInt(mUseHardwareFilteringIfSupported ? 1 : 0);
 		dest.writeInt(mUseHardwareBatchingIfSupported ? 1 : 0);
+		dest.writeLong(mPowerSaveScanInterval);
+		dest.writeLong(mPowerSaveRestInterval);
 	}
 
 	@Override
@@ -242,6 +256,22 @@ public class ScanSettings implements Parcelable {
 	};
 
 	/**
+	 * Determine if we should do power-saving sleep on pre-Lollipop
+	 * @return
+     */
+	public boolean hasPowerSaveMode() {
+		return mPowerSaveRestInterval > 0 && mPowerSaveScanInterval > 0;
+	}
+
+	public long getPowerSaveRest() {
+		return mPowerSaveRestInterval;
+	}
+
+	public long getPowerSaveScan() {
+		return mPowerSaveScanInterval;
+	}
+
+	/**
 	 * Builder for {@link ScanSettings}.
 	 */
 	public static final class Builder {
@@ -255,6 +285,8 @@ public class ScanSettings implements Parcelable {
 		private boolean mUseHardwareCallbackTypesIfSupported = true;
 		private long mMatchLostDeviceTimeout = MATCH_LOST_DEVICE_TIMEOUT_DEFAULT;
 		private long mMatchLostTaskInterval = MATCH_LOST_TASK_INTERVAL_DEFAULT;
+		private long mPowerSaveRestInterval = 0;
+		private long mPowerSaveScanInterval = 0;
 
 		/**
 		 * Set scan mode for Bluetooth LE scan.
@@ -400,13 +432,30 @@ public class ScanSettings implements Parcelable {
 		}
 
 		/**
+		 * Pre-Lollipop scanning requires a wakelock and the CPU cannot go to sleep. To conserve power we can optionally
+		 * scan for a certain duration (scan interval) and then rest for a time before starting scanning again. Won't
+		 * affect Lollipop or later devices
+		 * @param scanInterval interval in ms to scan at a time
+		 * @param restInterval interval to sleep for without scanning before scanning again for scanInterval
+         * @return
+         */
+		public Builder setPowerSave(final long scanInterval, final long restInterval) {
+			if (scanInterval <= 0 || restInterval <= 0) {
+				throw new IllegalArgumentException("scanInterval and restInterval must be > 0");
+			}
+			mPowerSaveScanInterval = scanInterval;
+			mPowerSaveRestInterval = restInterval;
+			return this;
+		}
+
+		/**
 		 * Build {@link ScanSettings}.
 		 */
 		public ScanSettings build() {
 			return new ScanSettings(mScanMode, mCallbackType, mReportDelayMillis,
 					mMatchMode, mNumOfMatchesPerFilter, mUseHardwareFilteringIfSupported,
 					mUseHardwareBatchingIfSupported, mUseHardwareCallbackTypesIfSupported,
-					mMatchLostDeviceTimeout, mMatchLostTaskInterval);
+					mMatchLostDeviceTimeout, mMatchLostTaskInterval, mPowerSaveScanInterval, mPowerSaveRestInterval);
 		}
 	}
 }
