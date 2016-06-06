@@ -24,12 +24,12 @@ package no.nordicsemi.android.support.v18.scanner;
 
 import android.os.ParcelUuid;
 import android.support.annotation.Nullable;
-import android.support.v4.util.ArrayMap;
 import android.util.Log;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -185,7 +185,7 @@ public class ScanRecord {
 		int txPowerLevel = Integer.MIN_VALUE;
 
 		SparseArray<byte[]> manufacturerData = new SparseArray<>();
-		Map<ParcelUuid, byte[]> serviceData = new ArrayMap<>();
+		Map<ParcelUuid, byte[]> serviceData = new HashMap<>();
 
 		try {
 			while (currentPos < scanRecord.length) {

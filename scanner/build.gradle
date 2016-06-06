@@ -59,7 +59,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:support-annotations:23.3.0'
 }
 
 // The following script creates a POM file required to publish on Maven Central
