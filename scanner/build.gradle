@@ -15,7 +15,7 @@ apply plugin: 'com.jfrog.bintray'
 ext {
     PUBLISH_GROUP_ID = 'no.nordicsemi.android.support.v18'
     PUBLISH_ARTIFACT_ID = 'scanner'
-    PUBLISH_VERSION = '0.1.2'
+    PUBLISH_VERSION = '0.2.0'
 
     bintrayRepo = 'android'
     bintrayName = 'no.nordicsemi.android.support.v18:scanner'
@@ -46,8 +46,8 @@ android {
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 23
-        versionCode 3
-        versionName "0.1.2"
+        versionCode 4
+        versionName "0.2.0"
     }
     buildTypes {
         release {
@@ -59,7 +59,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:support-annotations:23.3.0'
+    compile 'com.android.support:support-annotations:23.4.0'
 }
 
 // The following script creates a POM file required to publish on Maven Central
