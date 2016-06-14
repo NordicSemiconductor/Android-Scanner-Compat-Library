@@ -9,14 +9,14 @@ The Scanner Compat library solves the problem with scanning for Bluetooth Smart 
 The compat library may be found on jcenter repository. Add it to your project by adding the following dependency:
 
 ```Groovy
-compile 'no.nordicsemi.android.support.v18:scanner:0.1.2'
+compile 'no.nordicsemi.android.support.v18:scanner:0.2.0'
 ```
 
 ## API
 
 The Scanner Compat API is very similar to the original one, known from Lollipop.
 
-Instead of getting it from the **BluetoothAdapter**, aquire the scanner instance using:
+Instead of getting it from the **BluetoothAdapter**, acquire the scanner instance using:
 
 ```java
 BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
