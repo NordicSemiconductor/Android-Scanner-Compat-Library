@@ -266,7 +266,52 @@ public class ScanRecord {
 		}
 	}
 
-	@Override
+  @Override public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ScanRecord that = (ScanRecord) o;
+
+    if (mAdvertiseFlags != that.mAdvertiseFlags) {
+      return false;
+    }
+    if (mTxPowerLevel != that.mTxPowerLevel) {
+      return false;
+    }
+    if (mServiceUuids != null ? !mServiceUuids.equals(that.mServiceUuids) : that.mServiceUuids != null) {
+      return false;
+    }
+    if (mManufacturerSpecificData != null ? !mManufacturerSpecificData.equals(
+        that.mManufacturerSpecificData) : that.mManufacturerSpecificData != null) {
+      return false;
+    }
+    if (mServiceData != null ? !mServiceData.equals(that.mServiceData)
+        : that.mServiceData != null) {
+      return false;
+    }
+    if (mDeviceName != null ? !mDeviceName.equals(that.mDeviceName) : that.mDeviceName != null) {
+      return false;
+    }
+    return Arrays.equals(mBytes, that.mBytes);
+  }
+
+  @Override public int hashCode() {
+    int result = mAdvertiseFlags;
+    result = 31 * result + (mServiceUuids != null ? mServiceUuids.hashCode() : 0);
+    result = 31 * result + (mManufacturerSpecificData != null ? mManufacturerSpecificData.hashCode() : 0);
+    result = 31 * result + (mServiceData != null ? mServiceData.hashCode() : 0);
+    result = 31 * result + mTxPowerLevel;
+    result = 31 * result + (mDeviceName != null ? mDeviceName.hashCode() : 0);
+    result = 31 * result + Arrays.hashCode(mBytes);
+    return result;
+  }
+
+  @Override
 	public String toString() {
 		return "ScanRecord [mAdvertiseFlags=" + mAdvertiseFlags + ", mServiceUuids=" + mServiceUuids
 				+ ", mManufacturerSpecificData=" + BluetoothLeUtils.toString(mManufacturerSpecificData)
