@@ -9,7 +9,7 @@ The Scanner Compat library solves the problem with scanning for Bluetooth Smart 
 The compat library may be found on jcenter repository. Add it to your project by adding the following dependency:
 
 ```Groovy
-compile 'no.nordicsemi.android.support.v18:scanner:0.2.0'
+compile 'no.nordicsemi.android.support.v18:scanner:1.0.0'
 ```
 
 ## API
