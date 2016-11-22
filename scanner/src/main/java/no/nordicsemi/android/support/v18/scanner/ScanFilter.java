@@ -36,13 +36,14 @@ import java.util.UUID;
 /**
  * Criteria for filtering result from Bluetooth LE scans. A {@link ScanFilter} allows clients to
  * restrict scan results to only those that are of interest to them.
- * <p>
- * Current filtering on the following fields are supported:
- * <li>Service UUIDs which identify the bluetooth gatt services running on the device.
- * <li>Name of remote Bluetooth LE device.
- * <li>Mac address of the remote device.
- * <li>Service data which is the data associated with a service.
- * <li>Manufacturer specific data which is the data associated with a particular manufacturer.
+ * <p>Current filtering on the following fields are supported:</p>
+ * <ul>
+ * <li>Service UUIDs which identify the bluetooth gatt services running on the device.</li>
+ * <li>Name of remote Bluetooth LE device.</li>
+ * <li>Mac address of the remote device.</li>
+ * <li>Service data which is the data associated with a service.</li>
+ * <li>Manufacturer specific data which is the data associated with a particular manufacturer.</li>
+ * </ul>
  *
  * @see ScanResult
  * @see BluetoothLeScannerCompat
