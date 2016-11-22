@@ -81,6 +81,14 @@ dependencies {
     testCompile "org.powermock:powermock-api-mockito:1.6.2"
 }
 
+afterEvaluate { project ->
+    android.libraryVariants.all { variant ->
+        tasks.androidJavadocs.doFirst {
+            classpath += configurations.compile
+        }
+    }
+}
+
 // The following script creates a POM file required to publish on Maven Central
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
 
