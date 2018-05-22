@@ -2,7 +2,12 @@
 
 [ ![Download](https://api.bintray.com/packages/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/images/download.svg) ](https://bintray.com/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/_latestVersion)
 
-The Scanner Compat library solves the problem with scanning for Bluetooth Smart devices on Android. The scanner API has changed in the Android 5.0 and has been extended in 6.0. Using this library you may have all new features even on older phones. If a feature (for example offloaded filtering or batching) is not supported natively, it will be emulated by the compat library. You may also disable the native support for filtering, batching and reporting first match or match lost if required.
+The Scanner Compat library solves the problem with scanning for Bluetooth Smart devices on Android. 
+The scanner API has changed in the Android 5.0 and has been extended in 6.0 and 8.0. 
+Using this library you may have almost all new features even on older phones. If a feature (for example offloaded filtering or batching) is not supported natively,
+it will be emulated by the compat library. You may also disable the native support for filtering, batching and reporting first match or match lost if required.
+Advertising Extension (`ScanSetting#setLegacy(boolean)` or `setPhy(int)`) is available only on Android Oreo or newer and such calls will be ignored on older platforms, 
+that means only legacy advertising packets on PHY LE 1M will be reported, due to the Bluetooth chipset capabilities.
 
 ## Usage
 
