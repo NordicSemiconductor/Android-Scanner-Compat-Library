@@ -8,14 +8,14 @@ apply plugin: 'com.android.library'
  *
  * A newer then described version of maven plugin dependency is required (see project's gradle.build).
  */
-
+/*
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 ext {
     PUBLISH_GROUP_ID = 'no.nordicsemi.android.support.v18'
     PUBLISH_ARTIFACT_ID = 'scanner'
-    PUBLISH_VERSION = '1.0.0'
+    PUBLISH_VERSION = '1.1.0'
 
     bintrayRepo = 'android'
     bintrayName = 'no.nordicsemi.android.support.v18:scanner'
@@ -37,17 +37,16 @@ ext {
     licenseName = 'The BSD 3-Clause License'
     licenseUrl = 'http://opensource.org/licenses/BSD-3-Clause'
     allLicenses = ["BSD 3-Clause"]
-}
+}*/
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    compileSdkVersion 27
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 25
-        versionCode 4
-        versionName "1.0.0"
+        targetSdkVersion 27
+        versionCode 5
+        versionName "1.1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -63,24 +62,24 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-annotations:25.0.0'
+    implementation 'com.android.support:support-annotations:27.1.1'
 
-    androidTestCompile "com.android.support.test:runner:0.5"
-    androidTestCompile "com.android.support.test:rules:0.5"
-    androidTestCompile "org.hamcrest:hamcrest-library:1.3"
-    androidTestCompile ("junit:junit:4.12") {
+    androidTestImplementation "com.android.support.test:runner:1.0.2"
+    androidTestImplementation "com.android.support.test:rules:1.0.2"
+    androidTestImplementation "org.hamcrest:hamcrest-library:1.3"
+    androidTestImplementation ("junit:junit:4.12") {
       exclude module: 'hamcrest-core'
     }
 
-    testCompile "org.hamcrest:hamcrest-library:1.3"
-    testCompile ("junit:junit:4.12") {
+    testImplementation "org.hamcrest:hamcrest-library:1.3"
+    testImplementation ("junit:junit:4.12") {
       exclude module: 'hamcrest-core'
     }
-    testCompile "org.mockito:mockito-core:1.10.19"
-    testCompile "org.powermock:powermock-module-junit4:1.6.2"
-    testCompile "org.powermock:powermock-api-mockito:1.6.2"
+    testImplementation "org.mockito:mockito-core:2.18.0"
+    testImplementation "org.powermock:powermock-module-junit4:1.7.4"
+    testImplementation "org.powermock:powermock-api-mockito:1.7.4"
 }
-
+/*
 afterEvaluate { project ->
     android.libraryVariants.all { variant ->
         tasks.androidJavadocs.doFirst {
@@ -131,3 +130,4 @@ bintray {
         }
     }
 }
+*/

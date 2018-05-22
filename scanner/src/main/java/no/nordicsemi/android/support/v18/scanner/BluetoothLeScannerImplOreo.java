@@ -27,8 +27,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-@TargetApi(Build.VERSION_CODES.M)
-/* package */ class BluetoothLeScannerImplMarshmallow extends BluetoothLeScannerImplLollipop {
+@TargetApi(Build.VERSION_CODES.O)
+/* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
 
 	/* package */ android.bluetooth.le.ScanSettings toImpl(@NonNull final BluetoothAdapter adapter, @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder = new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
@@ -41,6 +41,24 @@ import android.support.annotation.NonNull;
 					.setMatchMode(settings.getMatchMode())
 					.setNumOfMatches(settings.getNumOfMatches());
 
+		builder.setLegacy(settings.getLegacy());
+		builder.setPhy(settings.getPhy());
+
 		return builder.build();
+	}
+
+	/* package */ ScanResult toImpl(android.bluetooth.le.ScanResult _result) {
+		// Calculate the important bits of Event Type
+		final int eventType = (_result.getDataStatus() << 5)
+				| (_result.isLegacy() ? ScanResult.ET_LEGACY_MASK : 0)
+				| (_result.isConnectable() ? ScanResult.ET_CONNECTABLE_MASK : 0);
+		// Get data as bytes
+		final byte[] data = _result.getScanRecord() != null ? _result.getScanRecord().getBytes() : null;
+		// And return the v18.ScanResult
+		return new ScanResult(_result.getDevice(), eventType, _result.getPrimaryPhy(),
+				_result.getSecondaryPhy(), _result.getAdvertisingSid(),
+				_result.getTxPower(), _result.getRssi(),
+				_result.getPeriodicAdvertisingInterval(),
+				ScanRecord.parseFromBytes(data), _result.getTimestampNanos());
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -20,6 +20,7 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.os.ParcelUuid;
@@ -33,7 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ScanRecord {
+/**
+ * Represents a scan record from Bluetooth LE scan.
+ */
+public final class ScanRecord {
 
 	private static final String TAG = "ScanRecord";
 
@@ -49,7 +53,9 @@ public class ScanRecord {
 	private static final int DATA_TYPE_LOCAL_NAME_SHORT = 0x08;
 	private static final int DATA_TYPE_LOCAL_NAME_COMPLETE = 0x09;
 	private static final int DATA_TYPE_TX_POWER_LEVEL = 0x0A;
-	private static final int DATA_TYPE_SERVICE_DATA = 0x16;
+	private static final int DATA_TYPE_SERVICE_DATA_16_BIT = 0x16;
+	private static final int DATA_TYPE_SERVICE_DATA_32_BIT = 0x20;
+	private static final int DATA_TYPE_SERVICE_DATA_128_BIT = 0x21;
 	private static final int DATA_TYPE_MANUFACTURER_SPECIFIC_DATA = 0xFF;
 
 	// Flags of the advertising data.
@@ -149,7 +155,7 @@ public class ScanRecord {
 		return mBytes;
 	}
 
-	private ScanRecord(List<ParcelUuid> serviceUuids,
+	private ScanRecord(@Nullable List<ParcelUuid> serviceUuids,
 					   SparseArray<byte[]> manufacturerData,
 					   Map<ParcelUuid, byte[]> serviceData,
 					   int advertiseFlags, int txPowerLevel,
@@ -225,10 +231,16 @@ public class ScanRecord {
 					case DATA_TYPE_TX_POWER_LEVEL:
 						txPowerLevel = scanRecord[currentPos];
 						break;
-					case DATA_TYPE_SERVICE_DATA:
-						// The first two bytes of the service data are service data UUID in little
-						// endian. The rest bytes are service data.
+					case DATA_TYPE_SERVICE_DATA_16_BIT:
+					case DATA_TYPE_SERVICE_DATA_32_BIT:
+					case DATA_TYPE_SERVICE_DATA_128_BIT:
 						int serviceUuidLength = BluetoothUuid.UUID_BYTES_16_BIT;
+						if (fieldType == DATA_TYPE_SERVICE_DATA_32_BIT) {
+							serviceUuidLength = BluetoothUuid.UUID_BYTES_32_BIT;
+						} else if (fieldType == DATA_TYPE_SERVICE_DATA_128_BIT) {
+							serviceUuidLength = BluetoothUuid.UUID_BYTES_128_BIT;
+						}
+
 						byte[] serviceDataUuidBytes = extractBytes(scanRecord, currentPos,
 								serviceUuidLength);
 						ParcelUuid serviceDataUuid = BluetoothUuid.parseUuidFrom(
@@ -266,52 +278,19 @@ public class ScanRecord {
 		}
 	}
 
-  @Override public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		ScanRecord other = (ScanRecord) obj;
+		return Arrays.equals(mBytes, other.mBytes);
+	}
 
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    ScanRecord that = (ScanRecord) o;
-
-    if (mAdvertiseFlags != that.mAdvertiseFlags) {
-      return false;
-    }
-    if (mTxPowerLevel != that.mTxPowerLevel) {
-      return false;
-    }
-    if (mServiceUuids != null ? !mServiceUuids.equals(that.mServiceUuids) : that.mServiceUuids != null) {
-      return false;
-    }
-    if (mManufacturerSpecificData != null ? !mManufacturerSpecificData.equals(
-        that.mManufacturerSpecificData) : that.mManufacturerSpecificData != null) {
-      return false;
-    }
-    if (mServiceData != null ? !mServiceData.equals(that.mServiceData)
-        : that.mServiceData != null) {
-      return false;
-    }
-    if (mDeviceName != null ? !mDeviceName.equals(that.mDeviceName) : that.mDeviceName != null) {
-      return false;
-    }
-    return Arrays.equals(mBytes, that.mBytes);
-  }
-
-  @Override public int hashCode() {
-    int result = mAdvertiseFlags;
-    result = 31 * result + (mServiceUuids != null ? mServiceUuids.hashCode() : 0);
-    result = 31 * result + (mManufacturerSpecificData != null ? mManufacturerSpecificData.hashCode() : 0);
-    result = 31 * result + (mServiceData != null ? mServiceData.hashCode() : 0);
-    result = 31 * result + mTxPowerLevel;
-    result = 31 * result + (mDeviceName != null ? mDeviceName.hashCode() : 0);
-    result = 31 * result + Arrays.hashCode(mBytes);
-    return result;
-  }
-
-  @Override
+	@Override
 	public String toString() {
 		return "ScanRecord [mAdvertiseFlags=" + mAdvertiseFlags + ", mServiceUuids=" + mServiceUuids
 				+ ", mManufacturerSpecificData=" + BluetoothLeUtils.toString(mManufacturerSpecificData)

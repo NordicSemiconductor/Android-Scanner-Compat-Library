@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"deprecation", "WeakerAccess"})
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 /* package */ class BluetoothLeScannerImplLollipop extends BluetoothLeScannerCompat {
 	private final BluetoothAdapter mBluetoothAdapter;
@@ -44,7 +45,7 @@ import java.util.Map;
 	private final Map<android.bluetooth.le.ScanCallback, ScanCallbackWrapper> mWrappers2; // used to get wrapper in scan result callback
 	private boolean offloadedFilteringSupported;
 
-	public BluetoothLeScannerImplLollipop() {
+	/* package */ BluetoothLeScannerImplLollipop() {
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		mWrappers = new HashMap<>();
 		mWrappers2 = new HashMap<>();
@@ -80,6 +81,7 @@ import java.util.Map;
 	}
 
 	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void stopScan(final ScanCallback callback) {
 		final ScanCallbackWrapper wrapper = mWrappers.get(callback);
 		if (wrapper == null)
@@ -125,9 +127,7 @@ import java.util.Map;
 		public void onScanResult(final int callbackType, final android.bluetooth.le.ScanResult _result) {
 			final ScanCallbackWrapper wrapper = mWrappers2.get(this);
 			if (wrapper != null) {
-				final byte[] data = _result.getScanRecord() != null ? _result.getScanRecord().getBytes() : null;
-				final ScanResult result = new ScanResult(_result.getDevice(), ScanRecord.parseFromBytes(data), _result.getRssi(), _result.getTimestampNanos());
-
+				final ScanResult result = toImpl(_result);
 				wrapper.handleScanResult(result);
 			}
 		}
@@ -136,7 +136,8 @@ import java.util.Map;
 		public void onBatchScanResults(final List<android.bluetooth.le.ScanResult> _results) {
 			final ScanCallbackWrapper wrapper = mWrappers2.get(this);
 			if (wrapper != null) {
-				// On several phones the onBatchScanResults is called twice for every batch. Skip the second call if came to early.
+				// On several phones the onBatchScanResults is called twice for every batch.
+				// Skip the second call if came to early.
 				final long now = SystemClock.elapsedRealtime();
 				if (mLastBatchTimestamp > now - wrapper.getScanSettings().getReportDelayMillis() + 5) {
 					return;
@@ -145,8 +146,7 @@ import java.util.Map;
 
 				final List<ScanResult> results = new ArrayList<>();
 				for (final android.bluetooth.le.ScanResult _result : _results) {
-					final byte[] data = _result.getScanRecord() != null ? _result.getScanRecord().getBytes() : null;
-					final ScanResult result = new ScanResult(_result.getDevice(), ScanRecord.parseFromBytes(data), _result.getRssi(), _result.getTimestampNanos());
+					final ScanResult result = toImpl(_result);
 					results.add(result);
 				}
 
@@ -163,12 +163,15 @@ import java.util.Map;
 
 			final ScanSettings settings = wrapper.getScanSettings();
 
-			// We were able to determine offloaded batching and filtering before we started scan, but there is no method
-			// checking if callback types FIRST_MATCH and MATCH_LOST are supported. We get an error here it they are not.
-			if (settings.getUseHardwareCallbackTypesIfSupported() && settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
+			// We were able to determine offloaded batching and filtering before we started scan,
+			// but there is no method checking if callback types FIRST_MATCH and MATCH_LOST
+			// are supported. We get an error here it they are not.
+			if (settings.getUseHardwareCallbackTypesIfSupported()
+					&& settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
 				// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5
 
-				// This feature seems to be not supported on your phone. We will try to do pretty much the same in the code.
+				// This feature seems to be not supported on your phone.
+				// Let's try to do pretty much the same in the code.
 				settings.disableUseHardwareCallbackTypes();
 
 				final ScanCallback callback = wrapper.getScanCallback();
@@ -180,6 +183,11 @@ import java.util.Map;
 			// else, notify user application
 			wrapper.onScanManagerErrorCallback(errorCode);
 		}
+	}
+
+	/* package */ ScanResult toImpl(android.bluetooth.le.ScanResult _result) {
+		final byte[] data = _result.getScanRecord() != null ? _result.getScanRecord().getBytes() : null;
+		return new ScanResult(_result.getDevice(), ScanRecord.parseFromBytes(data), _result.getRssi(), _result.getTimestampNanos());
 	}
 
 	/* package */ android.bluetooth.le.ScanSettings toImpl(@NonNull final BluetoothAdapter adapter, @NonNull final ScanSettings settings) {

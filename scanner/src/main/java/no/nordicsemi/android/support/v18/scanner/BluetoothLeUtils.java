@@ -29,7 +29,9 @@ import java.util.Set;
 /**
  * Helper class for Bluetooth LE utils.
  */
-/* package */ class BluetoothLeUtils {
+/* package */
+@SuppressWarnings("unused")
+class BluetoothLeUtils {
 
 	/**
 	 * Returns a string composed from a {@link SparseArray}.

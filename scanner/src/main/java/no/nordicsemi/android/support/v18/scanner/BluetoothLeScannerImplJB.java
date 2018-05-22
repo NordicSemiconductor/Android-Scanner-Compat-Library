@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -28,14 +28,15 @@ import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.RequiresPermission;
-import android.util.Log;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/* package */ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements BluetoothAdapter.LeScanCallback {
+/* package */
+@SuppressWarnings("deprecation")
+class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements BluetoothAdapter.LeScanCallback {
 	private final BluetoothAdapter mBluetoothAdapter;
 	private final Map<ScanCallback, ScanCallbackWrapper> mWrappers;
 	private long mPowerSaveRestInterval;
@@ -71,7 +72,7 @@ import java.util.Map;
 		}
 	};
 
-	public BluetoothLeScannerImplJB() {
+	/* package */ BluetoothLeScannerImplJB() {
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		mWrappers = new HashMap<>();
 	}

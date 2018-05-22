@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,10 @@ import java.util.List;
 
 /**
  * Bluetooth LE scan callbacks. Scan results are reported using these callbacks.
+ *
+ * @see BluetoothLeScannerCompat#startScan
  */
+@SuppressWarnings("unused")
 public abstract class ScanCallback {
 	/**
 	 * Fails to start scan as BLE scan with the same settings is already started by the app.
@@ -52,6 +55,13 @@ public abstract class ScanCallback {
 	 * Fails to start scan as it is out of hardware resources.
 	 */
 	public static final int SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES = 5;
+
+	/**
+	 * Fails to start scan as application tries to scan too frequently.
+	 */
+	public static final int SCAN_FAILED_SCANNING_TOO_FREQUENTLY = 6;
+
+	static final int NO_ERROR = 0;
 
 	/**
 	 * Callback when a BLE advertisement has been found.

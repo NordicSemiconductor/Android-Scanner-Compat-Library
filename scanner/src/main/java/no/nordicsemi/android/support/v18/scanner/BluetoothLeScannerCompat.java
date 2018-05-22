@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -47,6 +47,7 @@ import java.util.Map;
  *
  * @see ScanFilter
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class BluetoothLeScannerCompat {
 	private static BluetoothLeScannerCompat mInstance;
 	private final Handler mHandler;
@@ -58,6 +59,8 @@ public abstract class BluetoothLeScannerCompat {
 	public static BluetoothLeScannerCompat getScanner() {
 		if (mInstance != null)
 			return mInstance;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			return mInstance = new BluetoothLeScannerImplOreo();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
 			return mInstance = new BluetoothLeScannerImplMarshmallow();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -105,7 +108,8 @@ public abstract class BluetoothLeScannerCompat {
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback) {
+	public void startScan(final List<ScanFilter> filters, final ScanSettings settings,
+						  final ScanCallback callback) {
 		if (settings == null || callback == null) {
 			throw new IllegalArgumentException("settings or callback is null");
 		}
@@ -120,14 +124,16 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback used to deliver scan results.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	/* package */ abstract void startScanInternal(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback);
+	/* package */ abstract void startScanInternal(final List<ScanFilter> filters,
+												  final ScanSettings settings,
+												  final ScanCallback callback);
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 *
-	 * @param callback
+	 * @param callback the callback used to start scanning.
 	 */
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	public abstract void stopScan(final ScanCallback callback);
@@ -162,13 +168,15 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		};
 
-		/* package */ ScanCallbackWrapper(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback) {
+		/* package */ ScanCallbackWrapper(final List<ScanFilter> filters, final ScanSettings settings,
+										  final ScanCallback callback) {
 			mFilters = filters;
 			mScanSettings = settings;
 			mScanCallback = callback;
 
 			// Emulate other callback types
-			if (settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES && !settings.getUseHardwareCallbackTypesIfSupported()) {
+			if (settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+					&& !settings.getUseHardwareCallbackTypesIfSupported()) {
 				mDevicesInRange = new HashMap<>();
 			} else
 				mDevicesInRange = null;
@@ -259,14 +267,17 @@ public abstract class BluetoothLeScannerCompat {
 						onFoundOrLost(true, scanResult);
 				}
 
-				// In case user wants to be notified about match lost, we need to start a task that will check periodically
-				if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0 && mMatchLostNotifierTask == null) {
+				// In case user wants to be notified about match lost, we need to start a task that
+				// will check periodically
+				if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0
+						&& mMatchLostNotifierTask == null) {
 					mMatchLostNotifierTask = new MatchLostNotifierTask();
 					mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
 				}
 			} else {
-				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value. If mDevicesInRange is empty
-				// Report delay > 0 means we are emulating hardware batching. Otherwise handleScanResults(List) is called, not this method.
+				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value.
+				// If mDevicesInRange is empty, report delay > 0 means we are emulating hardware
+				// batching. Otherwise handleScanResults(List) is called, not this method.
 				if (mScanSettings.getReportDelayMillis() > 0) {
 					synchronized (mScanResults) {
 						if (!mDevicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
@@ -280,7 +291,8 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
-		/* package */ void handleScanResults(final List<ScanResult> results, final boolean offloadedFilteringSupported) {
+		/* package */ void handleScanResults(final List<ScanResult> results,
+											 final boolean offloadedFilteringSupported) {
 			List<ScanResult> filteredResults = results;
 
 			if (mFilters != null && (!offloadedFilteringSupported || !mScanSettings.getUseHardwareFilteringIfSupported())) {

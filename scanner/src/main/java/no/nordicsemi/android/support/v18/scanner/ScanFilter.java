@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Nordic Semiconductor
+ * Copyright (c) 2018, Nordic Semiconductor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -79,7 +79,8 @@ public final class ScanFilter implements Parcelable {
 	private ScanFilter(@Nullable String name, @Nullable String deviceAddress, @Nullable ParcelUuid uuid,
 					   @Nullable ParcelUuid uuidMask, @Nullable ParcelUuid serviceDataUuid,
 					   @Nullable byte[] serviceData, @Nullable byte[] serviceDataMask,
-					   @Nullable int manufacturerId, @Nullable byte[] manufacturerData, @Nullable byte[] manufacturerDataMask) {
+					   int manufacturerId, @Nullable byte[] manufacturerData,
+					   @Nullable byte[] manufacturerDataMask) {
 		mDeviceName = name;
 		mServiceUuid = uuid;
 		mServiceUuidMask = uuidMask;
@@ -145,7 +146,7 @@ public final class ScanFilter implements Parcelable {
 	}
 
 	/**
-	 * A {@link Creator} to create {@link ScanFilter} from parcel.
+	 * A {@link android.os.Parcelable.Creator} to create {@link ScanFilter} from parcel.
 	 */
 	public static final Creator<ScanFilter>
 			CREATOR = new Creator<ScanFilter>() {
@@ -324,9 +325,11 @@ public final class ScanFilter implements Parcelable {
 		return true;
 	}
 
-	// Check if the uuid pattern is contained in a list of parcel uuids.
-	private boolean matchesServiceUuids(ParcelUuid uuid, ParcelUuid parcelUuidMask,
-										List<ParcelUuid> uuids) {
+	/**
+	 * Check if the uuid pattern is contained in a list of parcel uuids.
+	 */
+	private static boolean matchesServiceUuids(ParcelUuid uuid, ParcelUuid parcelUuidMask,
+											  List<ParcelUuid> uuids) {
 		if (uuid == null) {
 			return true;
 		}
@@ -344,7 +347,7 @@ public final class ScanFilter implements Parcelable {
 	}
 
 	// Check if the uuid pattern matches the particular service uuid.
-	private boolean matchesServiceUuid(UUID uuid, UUID mask, UUID data) {
+	private static boolean matchesServiceUuid(UUID uuid, UUID mask, UUID data) {
 		if (mask == null) {
 			return uuid.equals(data);
 		}
@@ -396,8 +399,12 @@ public final class ScanFilter implements Parcelable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mDeviceName, mDeviceAddress, mManufacturerId, mManufacturerData,
-				mManufacturerDataMask, mServiceDataUuid, mServiceData, mServiceDataMask,
+		return Objects.hash(mDeviceName, mDeviceAddress, mManufacturerId,
+				Arrays.hashCode(mManufacturerData),
+				Arrays.hashCode(mManufacturerDataMask),
+				mServiceDataUuid,
+				Arrays.hashCode(mServiceData),
+				Arrays.hashCode(mServiceDataMask),
 				mServiceUuid, mServiceUuidMask);
 	}
 
@@ -415,11 +422,18 @@ public final class ScanFilter implements Parcelable {
 				mManufacturerId == other.mManufacturerId &&
 				Objects.deepEquals(mManufacturerData, other.mManufacturerData) &&
 				Objects.deepEquals(mManufacturerDataMask, other.mManufacturerDataMask) &&
-				Objects.deepEquals(mServiceDataUuid, other.mServiceDataUuid) &&
+				Objects.equals(mServiceDataUuid, other.mServiceDataUuid) &&
 				Objects.deepEquals(mServiceData, other.mServiceData) &&
 				Objects.deepEquals(mServiceDataMask, other.mServiceDataMask) &&
 				Objects.equals(mServiceUuid, other.mServiceUuid) &&
 				Objects.equals(mServiceUuidMask, other.mServiceUuidMask);
+	}
+
+	/**
+	 * Checks if the scan filter is empty.
+	 */
+	/* package */ boolean isAllFieldsEmpty() {
+		return EMPTY.equals(this);
 	}
 
 	/**
