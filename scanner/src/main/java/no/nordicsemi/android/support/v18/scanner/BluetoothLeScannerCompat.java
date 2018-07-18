@@ -195,13 +195,23 @@ public abstract class BluetoothLeScannerCompat {
 
 		/* package */ void close() {
 			if (mScanResults != null) {
-				mHandler.removeCallbacks(mFlushPendingScanResultsTask);
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						mHandler.removeCallbacks(mFlushPendingScanResultsTask);
+					}
+				});
 			}
 			if (mDevicesInRange != null) {
 				mDevicesInRange.clear();
 			}
 			if (mMatchLostNotifierTask != null) {
-				mHandler.removeCallbacks(mMatchLostNotifierTask);
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						mHandler.removeCallbacks(mMatchLostNotifierTask);
+					}
+				});
 				mMatchLostNotifierTask = null;
 			}
 		}
