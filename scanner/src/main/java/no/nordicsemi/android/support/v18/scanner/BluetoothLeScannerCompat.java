@@ -50,7 +50,7 @@ import java.util.Map;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class BluetoothLeScannerCompat {
 	private static BluetoothLeScannerCompat mInstance;
-	private final Handler mHandler;
+	Handler mHandler;
 
 	/**
 	 * Returns the scanner compat object
@@ -69,7 +69,6 @@ public abstract class BluetoothLeScannerCompat {
 	}
 
 	/* package */ BluetoothLeScannerCompat() {
-		mHandler = new Handler(Looper.getMainLooper());
 	}
 
 	/**
@@ -90,6 +89,7 @@ public abstract class BluetoothLeScannerCompat {
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
+		mHandler = new Handler(Looper.getMainLooper());
 		startScanInternal(null, new ScanSettings.Builder().build(), callback);
 	}
 
@@ -113,8 +113,32 @@ public abstract class BluetoothLeScannerCompat {
 		if (settings == null || callback == null) {
 			throw new IllegalArgumentException("settings or callback is null");
 		}
+		mHandler = new Handler(Looper.getMainLooper());
 		startScanInternal(filters, settings, callback);
 	}
+
+    /**
+     * Start Bluetooth LE scan. The scan results will be delivered through {@code callback}.
+     * <p>
+     * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+     * An app must hold
+     * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_COARSE_LOCATION} or
+	 * {@link Manifest.permission#ACCESS_FINE_LOCATION ACCESS_FINE_LOCATION} permission
+     * in order to get results.
+     *
+     * @param filters {@link ScanFilter}s for finding exact BLE devices.
+     * @param settings Settings for the scan.
+     * @param callback Callback used to deliver scan results.
+     * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+     */
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+    public void startScan(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback, final Handler handler) {
+        if (settings == null || callback == null) {
+            throw new IllegalArgumentException("settings or callback is null");
+        }
+        mHandler = handler != null ? handler : new Handler(Looper.getMainLooper());
+        startScanInternal(filters, settings, callback);
+    }
 
 	/**
 	 * Starts Bluetooth LE scan. Its implementation depends on the Android version.

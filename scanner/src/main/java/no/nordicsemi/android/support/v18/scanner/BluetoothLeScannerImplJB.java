@@ -25,7 +25,6 @@ package no.nordicsemi.android.support.v18.scanner;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.RequiresPermission;
 
@@ -41,7 +40,6 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements Bluet
 	private final Map<ScanCallback, ScanCallbackWrapper> mWrappers;
 	private long mPowerSaveRestInterval;
 	private long mPowerSaveScanInterval;
-	private Handler mPowerSaveHandler;
 	private Runnable mPowerSaveSleepRunnable = new Runnable() {
 		@SuppressWarnings("deprecation")
 		@Override
@@ -49,10 +47,7 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements Bluet
 		public void run() {
 			if (mBluetoothAdapter != null && mPowerSaveRestInterval > 0 && mPowerSaveScanInterval > 0) {
 				mBluetoothAdapter.stopLeScan(BluetoothLeScannerImplJB.this);
-
-				if (mPowerSaveHandler != null) {
-					mPowerSaveHandler.postDelayed(mPowerSaveScanRunnable, mPowerSaveRestInterval);
-				}
+				mHandler.postDelayed(mPowerSaveScanRunnable, mPowerSaveRestInterval);
 			}
 		}
 	};
@@ -64,10 +59,7 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements Bluet
 		public void run() {
 			if (mBluetoothAdapter != null && mPowerSaveRestInterval > 0 && mPowerSaveScanInterval > 0) {
 				mBluetoothAdapter.startLeScan(BluetoothLeScannerImplJB.this);
-
-				if (mPowerSaveHandler != null) {
-					mPowerSaveHandler.postDelayed(mPowerSaveSleepRunnable, mPowerSaveScanInterval);
-				}
+				mHandler.postDelayed(mPowerSaveSleepRunnable, mPowerSaveScanInterval);
 			}
 		}
 	};
@@ -120,19 +112,13 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat implements Bluet
 		if (minRest < Long.MAX_VALUE && minScan < Long.MAX_VALUE) {
 			mPowerSaveRestInterval = minRest;
 			mPowerSaveScanInterval = minScan;
-			if (mPowerSaveHandler == null) {
-				mPowerSaveHandler = new Handler();
-			} else {
-				mPowerSaveHandler.removeCallbacks(mPowerSaveScanRunnable);
-				mPowerSaveHandler.removeCallbacks(mPowerSaveSleepRunnable);
-			}
-			mPowerSaveHandler.postDelayed(mPowerSaveSleepRunnable, mPowerSaveScanInterval);
+			mHandler.removeCallbacks(mPowerSaveScanRunnable);
+			mHandler.removeCallbacks(mPowerSaveSleepRunnable);
+			mHandler.postDelayed(mPowerSaveSleepRunnable, mPowerSaveScanInterval);
 		} else {
 			mPowerSaveRestInterval = mPowerSaveScanInterval = 0;
-			if (mPowerSaveHandler != null) {
-				mPowerSaveHandler.removeCallbacks(mPowerSaveScanRunnable);
-				mPowerSaveHandler.removeCallbacks(mPowerSaveSleepRunnable);
-			}
+			mHandler.removeCallbacks(mPowerSaveScanRunnable);
+			mHandler.removeCallbacks(mPowerSaveSleepRunnable);
 		}
 	}
 
