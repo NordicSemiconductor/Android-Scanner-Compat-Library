@@ -37,6 +37,7 @@ import java.util.Map;
 /**
  * Represents a scan record from Bluetooth LE scan.
  */
+@SuppressWarnings("WeakerAccess")
 public final class ScanRecord {
 
 	private static final String TAG = "ScanRecord";

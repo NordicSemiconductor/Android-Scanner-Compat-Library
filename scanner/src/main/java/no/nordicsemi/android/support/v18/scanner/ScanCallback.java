@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @see BluetoothLeScannerCompat#startScan
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class ScanCallback {
 	/**
 	 * Fails to start scan as BLE scan with the same settings is already started by the app.

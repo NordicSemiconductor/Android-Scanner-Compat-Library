@@ -48,6 +48,7 @@ import java.util.UUID;
  * @see ScanResult
  * @see BluetoothLeScannerCompat
  */
+@SuppressWarnings("WeakerAccess")
 public final class ScanFilter implements Parcelable {
 
 	@Nullable
