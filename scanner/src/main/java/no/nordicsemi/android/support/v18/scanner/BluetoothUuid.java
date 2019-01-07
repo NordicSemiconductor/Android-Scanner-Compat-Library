@@ -27,7 +27,7 @@ import java.util.UUID;
  */
 /* package */ final class BluetoothUuid {
 
-	static final ParcelUuid BASE_UUID =
+	private static final ParcelUuid BASE_UUID =
 			ParcelUuid.fromString("00000000-0000-1000-8000-00805F9B34FB");
 
 	/** Length of bytes for 16 bit UUID */

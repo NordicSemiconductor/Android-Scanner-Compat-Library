@@ -29,6 +29,7 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
 import java.util.ArrayList;
@@ -54,7 +55,9 @@ import java.util.Map;
 
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	/* package */ void startScanInternal(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback) {
+	/* package */ void startScanInternal(@Nullable final List<ScanFilter> filters,
+										 @NonNull final ScanSettings settings,
+										 @NonNull final ScanCallback callback) {
 		BluetoothLeUtils.checkAdapterStateOn(mBluetoothAdapter);
 		offloadedFilteringSupported = mBluetoothAdapter.isOffloadedFilteringSupported();
 
@@ -82,7 +85,7 @@ import java.util.Map;
 
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void stopScan(final ScanCallback callback) {
+	public void stopScan(@NonNull final ScanCallback callback) {
 		final ScanCallbackWrapper wrapper = mWrappers.get(callback);
 		if (wrapper == null)
 			return;
@@ -102,8 +105,9 @@ import java.util.Map;
 
 	@Override
 	@RequiresPermission(Manifest.permission.BLUETOOTH)
-	public void flushPendingScanResults(final ScanCallback callback) {
+	public void flushPendingScanResults(@NonNull final ScanCallback callback) {
 		BluetoothLeUtils.checkAdapterStateOn(mBluetoothAdapter);
+		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback cannot be null!");
 		}

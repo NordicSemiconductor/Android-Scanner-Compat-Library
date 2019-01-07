@@ -27,6 +27,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
 import java.util.ArrayList;
@@ -85,7 +87,8 @@ public abstract class BluetoothLeScannerCompat {
 	 * @throws IllegalArgumentException If {@code callback} is null.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(final ScanCallback callback) {
+	public void startScan(@NonNull final ScanCallback callback) {
+		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
@@ -108,8 +111,10 @@ public abstract class BluetoothLeScannerCompat {
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(final List<ScanFilter> filters, final ScanSettings settings,
-						  final ScanCallback callback) {
+	public void startScan(@Nullable final List<ScanFilter> filters,
+						  @NonNull final ScanSettings settings,
+						  @NonNull final ScanCallback callback) {
+		//noinspection ConstantConditions
 		if (settings == null || callback == null) {
 			throw new IllegalArgumentException("settings or callback is null");
 		}
@@ -131,14 +136,18 @@ public abstract class BluetoothLeScannerCompat {
      * @param callback Callback used to deliver scan results.
      * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
      */
-    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-    public void startScan(final List<ScanFilter> filters, final ScanSettings settings, final ScanCallback callback, final Handler handler) {
-        if (settings == null || callback == null) {
-            throw new IllegalArgumentException("settings or callback is null");
-        }
-        mHandler = handler != null ? handler : new Handler(Looper.getMainLooper());
-        startScanInternal(filters, settings, callback);
-    }
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	public void startScan(@Nullable final List<ScanFilter> filters,
+						  @NonNull final ScanSettings settings,
+						  @NonNull final ScanCallback callback,
+						  @Nullable final Handler handler) {
+		//noinspection ConstantConditions
+		if (settings == null || callback == null) {
+			throw new IllegalArgumentException("settings or callback is null");
+		}
+		mHandler = handler != null ? handler : new Handler(Looper.getMainLooper());
+		startScanInternal(filters, settings, callback);
+	}
 
 	/**
 	 * Starts Bluetooth LE scan. Its implementation depends on the Android version.
@@ -148,9 +157,9 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback used to deliver scan results.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	/* package */ abstract void startScanInternal(final List<ScanFilter> filters,
-												  final ScanSettings settings,
-												  final ScanCallback callback);
+	/* package */ abstract void startScanInternal(@Nullable final List<ScanFilter> filters,
+												  @NonNull final ScanSettings settings,
+												  @NonNull final ScanCallback callback);
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
@@ -160,7 +169,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback the callback used to start scanning.
 	 */
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
-	public abstract void stopScan(final ScanCallback callback);
+	public abstract void stopScan(@NonNull final ScanCallback callback);
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth
@@ -170,7 +179,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback of the Bluetooth LE Scan, it has to be the same instance as the one
 	 *            used to start scan.
 	 */
-	public abstract void flushPendingScanResults(final ScanCallback callback);
+	public abstract void flushPendingScanResults(@NonNull final ScanCallback callback);
 
 	/* package */ class ScanCallbackWrapper {
 		private final List<ScanFilter> mFilters;
@@ -192,8 +201,9 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		};
 
-		/* package */ ScanCallbackWrapper(final List<ScanFilter> filters, final ScanSettings settings,
-										  final ScanCallback callback) {
+		/* package */ ScanCallbackWrapper(@Nullable final List<ScanFilter> filters,
+										  @NonNull final ScanSettings settings,
+										  @NonNull final ScanCallback callback) {
 			mFilters = filters;
 			mScanSettings = settings;
 			mScanCallback = callback;
@@ -240,14 +250,17 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
+		@NonNull
 		/* package */ ScanSettings getScanSettings() {
 			return mScanSettings;
 		}
 
+		@Nullable
 		/* package */ List<ScanFilter> getScanFilters() {
 			return mFilters;
 		}
 
+		@NonNull
 		/* package */ ScanCallback getScanCallback() {
 			return mScanCallback;
 		}
@@ -286,7 +299,7 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
-		/* package */ void handleScanResult(final ScanResult scanResult) {
+		/* package */ void handleScanResult(@NonNull final ScanResult scanResult) {
 			if (mFilters != null && !mFilters.isEmpty() && !matches(scanResult))
 				return;
 
@@ -325,7 +338,7 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
-		/* package */ void handleScanResults(final List<ScanResult> results,
+		/* package */ void handleScanResults(@NonNull final List<ScanResult> results,
 											 final boolean offloadedFilteringSupported) {
 			List<ScanResult> filteredResults = results;
 
@@ -339,7 +352,7 @@ public abstract class BluetoothLeScannerCompat {
 			onBatchScanResults(filteredResults);
 		}
 
-		private boolean matches(final ScanResult result) {
+		private boolean matches(@NonNull final ScanResult result) {
 			for (final ScanFilter filter : mFilters) {
 				if (filter.matches(result))
 					return true;
@@ -347,7 +360,7 @@ public abstract class BluetoothLeScannerCompat {
 			return false;
 		}
 
-		private void onScanResult(final ScanResult scanResult) {
+		private void onScanResult(@NonNull final ScanResult scanResult) {
 			mHandler.post(new Runnable() {
 				@Override
 				public void run() {
@@ -356,7 +369,7 @@ public abstract class BluetoothLeScannerCompat {
 			});
 		}
 
-		private void onBatchScanResults(final List<ScanResult> results) {
+		private void onBatchScanResults(@NonNull final List<ScanResult> results) {
 			mHandler.post(new Runnable() {
 				@Override
 				public void run() {
@@ -365,7 +378,7 @@ public abstract class BluetoothLeScannerCompat {
 			});
 		}
 
-		private void onFoundOrLost(final boolean onFound, final ScanResult scanResult) {
+		private void onFoundOrLost(final boolean onFound, @NonNull final ScanResult scanResult) {
 			mHandler.post(new Runnable() {
 				@Override
 				public void run() {
@@ -383,7 +396,7 @@ public abstract class BluetoothLeScannerCompat {
 		}
 	}
 
-	private void postCallbackError(final ScanCallback callback, final int errorCode) {
+	private void postCallbackError(@NonNull final ScanCallback callback, final int errorCode) {
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {

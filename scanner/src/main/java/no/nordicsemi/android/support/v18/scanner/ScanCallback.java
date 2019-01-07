@@ -22,6 +22,8 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
+import android.support.annotation.NonNull;
+
 import java.util.List;
 
 /**
@@ -72,7 +74,7 @@ public abstract class ScanCallback {
 	 *            {@link ScanSettings#CALLBACK_TYPE_MATCH_LOST}
 	 * @param result A Bluetooth LE scan result.
 	 */
-	public void onScanResult(int callbackType, ScanResult result) {
+	public void onScanResult(int callbackType, @NonNull ScanResult result) {
 	}
 
 	/**
@@ -80,7 +82,7 @@ public abstract class ScanCallback {
 	 *
 	 * @param results List of scan results that are previously scanned.
 	 */
-	public void onBatchScanResults(List<ScanResult> results) {
+	public void onBatchScanResults(@NonNull List<ScanResult> results) {
 	}
 
 	/**
