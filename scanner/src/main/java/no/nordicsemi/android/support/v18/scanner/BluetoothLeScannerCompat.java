@@ -79,8 +79,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_COARSE_LOCATION} or
-	 * {@link Manifest.permission#ACCESS_FINE_LOCATION ACCESS_FINE_LOCATION} permission
+	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
 	 * in order to get results.
 	 *
 	 * @param callback Callback used to deliver scan results.
@@ -101,8 +100,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_COARSE_LOCATION} or
-	 * {@link Manifest.permission#ACCESS_FINE_LOCATION ACCESS_FINE_LOCATION} permission
+	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
 	 * in order to get results.
 	 *
 	 * @param filters {@link ScanFilter}s for finding exact BLE devices.
@@ -127,8 +125,7 @@ public abstract class BluetoothLeScannerCompat {
      * <p>
      * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
      * An app must hold
-     * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_COARSE_LOCATION} or
-	 * {@link Manifest.permission#ACCESS_FINE_LOCATION ACCESS_FINE_LOCATION} permission
+     * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
      * in order to get results.
      *
      * @param filters {@link ScanFilter}s for finding exact BLE devices.
