@@ -209,8 +209,9 @@ public abstract class BluetoothLeScannerCompat {
 			if (settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
 					&& !settings.getUseHardwareCallbackTypesIfSupported()) {
 				mDevicesInRange = new HashMap<>();
-			} else
+			} else {
 				mDevicesInRange = null;
+			}
 
 			// Emulate batching
 			final long delay = settings.getReportDelayMillis();
@@ -279,18 +280,20 @@ public abstract class BluetoothLeScannerCompat {
 			public void run() {
 				final long now = SystemClock.elapsedRealtimeNanos();
 
-				final Collection<ScanResult> results = mDevicesInRange.values();
-				for (final ScanResult result : results) {
-					if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
-						mMatchLostScanResults.add(result);
+				if (mDevicesInRange != null) {
+					final Collection<ScanResult> results = mDevicesInRange.values();
+					for (final ScanResult result : results) {
+						if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
+							mMatchLostScanResults.add(result);
+						}
 					}
-				}
-				if (!mMatchLostScanResults.isEmpty()) {
-					for (final ScanResult result : mMatchLostScanResults) {
-						mDevicesInRange.remove(result.getDevice().getAddress());
-						onFoundOrLost(false, result);
+					if (!mMatchLostScanResults.isEmpty()) {
+						for (final ScanResult result : mMatchLostScanResults) {
+							mDevicesInRange.remove(result.getDevice().getAddress());
+							onFoundOrLost(false, result);
+						}
+						mMatchLostScanResults.clear();
 					}
-					mMatchLostScanResults.clear();
 				}
 				mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
 			}
