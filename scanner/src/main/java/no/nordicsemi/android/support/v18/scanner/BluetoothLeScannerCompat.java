@@ -103,20 +103,21 @@ public abstract class BluetoothLeScannerCompat {
 	 * in order to get results.
 	 *
 	 * @param filters {@link ScanFilter}s for finding exact BLE devices.
-	 * @param settings Settings for the scan.
+	 * @param settings Optional settings for the scan.
 	 * @param callback Callback used to deliver scan results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void startScan(@Nullable final List<ScanFilter> filters,
-						  @NonNull final ScanSettings settings,
-						  @NonNull final ScanCallback callback) {
+						  @Nullable final ScanSettings settings,
+						  @NonNull  final ScanCallback callback) {
 		//noinspection ConstantConditions
-		if (settings == null || callback == null) {
-			throw new IllegalArgumentException("settings or callback is null");
+		if (callback == null) {
+			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(filters, settings, callback, handler);
+		startScanInternal(filters, settings != null ? settings : new ScanSettings.Builder().build(),
+				callback, handler);
 	}
 
 	/**
@@ -128,22 +129,22 @@ public abstract class BluetoothLeScannerCompat {
 	 * in order to get results.
 	 *
 	 * @param filters {@link ScanFilter}s for finding exact BLE devices.
-	 * @param settings Settings for the scan.
+	 * @param settings Optional settings for the scan.
 	 * @param callback Callback used to deliver scan results.
 	 * @param handler  Optional handler used to deliver results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void startScan(@Nullable final List<ScanFilter> filters,
-						  @NonNull final ScanSettings settings,
-						  @NonNull final ScanCallback callback,
+						  @Nullable final ScanSettings settings,
+						  @NonNull  final ScanCallback callback,
 						  @Nullable final Handler handler) {
 		//noinspection ConstantConditions
-		if (settings == null || callback == null) {
-			throw new IllegalArgumentException("settings or callback is null");
+		if (callback == null) {
+			throw new IllegalArgumentException("callback is null");
 		}
-		startScanInternal(filters, settings, callback,
-				handler != null ? handler : new Handler(Looper.getMainLooper()));
+		startScanInternal(filters, settings != null ? settings : new ScanSettings.Builder().build(),
+				callback, handler != null ? handler : new Handler(Looper.getMainLooper()));
 	}
 
 	/**
@@ -156,9 +157,9 @@ public abstract class BluetoothLeScannerCompat {
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ abstract void startScanInternal(@Nullable final List<ScanFilter> filters,
-												  @NonNull final ScanSettings settings,
-												  @NonNull final ScanCallback callback,
-												  @NonNull final Handler handler);
+												  @NonNull  final ScanSettings settings,
+												  @NonNull  final ScanCallback callback,
+												  @NonNull  final Handler handler);
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
