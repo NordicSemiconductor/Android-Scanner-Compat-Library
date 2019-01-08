@@ -22,16 +22,102 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
+import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.content.Context;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.RequiresPermission;
+
+import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.O)
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
 
-	@NonNull
+	/**
+	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
+	 * via the PendingIntent. Use this method of scanning if your process is not always running
+	 * and it should be started when scan results are available.
+	 * <p>
+	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 * An app must hold
+	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
+	 * in order to get results.
+	 * <p>
+	 * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
+	 * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
+	 * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
+	 * <p>
+	 * Scanning using {@link PendingIntent} on Android Oreo or newer may ignore some settings.
+	 * For example, {@link ScanSettings.Builder#setUseHardwareBatchingIfSupported(boolean)},
+	 * {@link ScanSettings.Builder#setUseHardwareCallbackTypesIfSupported(boolean)} and
+	 * {@link ScanSettings.Builder#setUseHardwareFilteringIfSupported(boolean)} will all be set to
+	 * true.
+	 *
+	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
+	 * @param settings       Optional settings for the scan.
+	 * @param context        Unused. Used only before Android Oreo.
+	 * @param callbackIntent The PendingIntent to deliver the result to.
+	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+	 */
 	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	public void startScan(@Nullable final List<ScanFilter> filters,
+						  @Nullable final ScanSettings settings,
+						  @NonNull  final Context context,
+						  @NonNull  final PendingIntent callbackIntent) {
+		//noinspection ConstantConditions
+		if (callbackIntent == null) {
+			throw new IllegalArgumentException("callbackIntent is null");
+		}
+		final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(ba);
+
+		final BluetoothLeScanner scanner = ba.getBluetoothLeScanner();
+		if (scanner == null)
+			throw new IllegalStateException("BT le scanner not available");
+
+		final ScanSettings nonNullSettings = settings != null ? settings : new ScanSettings.Builder().build();
+		final android.bluetooth.le.ScanSettings nativeSettings = toImpl(ba, nonNullSettings);
+		List<android.bluetooth.le.ScanFilter> nativeFilters = null;
+		if (filters != null && ba.isOffloadedFilteringSupported() && nonNullSettings.getUseHardwareFilteringIfSupported())
+            nativeFilters = toImpl(filters);
+
+		scanner.startScan(nativeFilters, nativeSettings, callbackIntent);
+	}
+
+	/**
+	 * Stops an ongoing Bluetooth LE scan.
+	 * <p>
+	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 *
+	 * @param context        Unused. Used only before Android Oreo.
+	 * @param callbackIntent The PendingIntent that was used to start the scan.
+	 */
+	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
+	public void stopScan(@NonNull final Context context,
+						 @NonNull final PendingIntent callbackIntent) {
+		//noinspection ConstantConditions
+		if (callbackIntent == null) {
+			throw new IllegalArgumentException("callbackIntent is null");
+		}
+
+		final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
+		if (ba == null)
+			return;
+		final BluetoothLeScanner scanner = ba.getBluetoothLeScanner();
+		if (scanner == null)
+			return;
+
+		scanner.stopScan(callbackIntent);
+	}
+
+    @NonNull
+    @Override
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
 																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =

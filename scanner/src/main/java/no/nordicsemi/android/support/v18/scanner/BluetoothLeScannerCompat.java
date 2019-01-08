@@ -23,6 +23,9 @@
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.Manifest;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -54,7 +57,29 @@ import java.util.Set;
  */
 public abstract class BluetoothLeScannerCompat {
 
-	private static BluetoothLeScannerCompat instance;
+    /**
+     * Extra containing a list of ScanResults. It can have one or more results if there was no
+     * error. In case of error, {@link #EXTRA_ERROR_CODE} will contain the error code and this
+     * extra will not be available.
+     */
+    public static final String EXTRA_LIST_SCAN_RESULT =
+            "android.bluetooth.le.extra.LIST_SCAN_RESULT";
+
+    /**
+     * Optional extra indicating the error code, if any. The error code will be one of the
+     * SCAN_FAILED_* codes in {@link android.bluetooth.le.ScanCallback}.
+     */
+    public static final String EXTRA_ERROR_CODE = "android.bluetooth.le.extra.ERROR_CODE";
+
+    /**
+     * Optional extra indicating the callback type, which will be one of
+     * CALLBACK_TYPE_* constants in {@link android.bluetooth.le.ScanSettings}.
+     *
+     * @see android.bluetooth.le.ScanCallback#onScanResult(int, android.bluetooth.le.ScanResult)
+     */
+    public static final String EXTRA_CALLBACK_TYPE = "android.bluetooth.le.extra.CALLBACK_TYPE";
+
+    private static BluetoothLeScannerCompat instance;
 
 	/**
 	 * Returns the scanner compat object
@@ -174,10 +199,69 @@ public abstract class BluetoothLeScannerCompat {
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 *
-	 * @param callback the callback used to start scanning.
+	 * @param callback The callback used to start scanning.
 	 */
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	public abstract void stopScan(@NonNull ScanCallback callback);
+
+    /**
+     * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
+     * via the PendingIntent. On platforms before Oreo this will start {@link ScannerService}
+	 * which will scan in background using given settings.
+     * <p>
+     * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+     * An app must hold
+     * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
+     * in order to get results.
+     * <p>
+     * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
+     * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
+     * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
+     *
+     * @param filters        {@link ScanFilter}s for finding exact BLE devices.
+     * @param settings       Optional settings for the scan.
+	 * @param context        Context used to start {@link ScannerService}.
+     * @param callbackIntent The PendingIntent to deliver the result to.
+     * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+     */
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+    public void startScan(@Nullable final List<ScanFilter> filters,
+						  @Nullable final ScanSettings settings,
+						  @NonNull  final Context context,
+						  @NonNull  final PendingIntent callbackIntent) {
+        //noinspection ConstantConditions
+        if (callbackIntent == null) {
+            throw new IllegalArgumentException("callbackIntent is null");
+        }
+		final Intent service = new Intent(context, ScannerService.class);
+        if (filters != null) {
+        	final ArrayList<ScanFilter> list = new ArrayList<>(filters.size());
+        	list.addAll(filters);
+			service.putParcelableArrayListExtra(ScannerService.EXTRA_FILTERS, list);
+		}
+        service.putExtra(ScannerService.EXTRA_SETTINGS,
+				settings != null ? settings : new ScanSettings.Builder().build());
+        service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+        service.putExtra(ScannerService.EXTRA_START, true);
+        context.startService(service);
+    }
+
+    /**
+     * Stops an ongoing Bluetooth LE scan.
+     * <p>
+     * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+     *
+	 * @param context        Context used to stop {@link ScannerService}.
+     * @param callbackIntent The PendingIntent that was used to start the scan.
+     */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
+    public void stopScan(@NonNull final Context context,
+						 @NonNull final PendingIntent callbackIntent) {
+		final Intent service = new Intent(context, ScannerService.class);
+		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_START, false);
+		context.startService(service);
+    }
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth

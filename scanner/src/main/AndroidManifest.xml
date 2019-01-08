@@ -1,3 +1,9 @@
-<manifest package="no.nordicsemi.android.support.v18.scanner">
+<manifest package="no.nordicsemi.android.support.v18.scanner"
+	xmlns:android="http://schemas.android.com/apk/res/android">
 
+	<application>
+		<service
+			android:name=".ScannerService"
+			android:exported="false"/>
+	</application>
 </manifest>
