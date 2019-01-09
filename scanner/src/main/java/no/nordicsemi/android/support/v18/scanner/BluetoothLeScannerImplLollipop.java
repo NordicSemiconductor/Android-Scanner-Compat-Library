@@ -58,14 +58,15 @@ import java.util.Map;
         if (scanner == null)
             throw new IllegalStateException("BT le scanner not available");
 
-		boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
+        boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
 
-        final ScanCallbackWrapperLollipop wrapper = new ScanCallbackWrapperLollipop(filters, settings, callback, handler, offloadedFilteringSupported);
+        ScanCallbackWrapperLollipop wrapper;
 
 		synchronized (mWrappers) {
             if (mWrappers.containsKey(callback)) {
                 throw new IllegalArgumentException("scanner already started with given callback");
             }
+            wrapper = new ScanCallbackWrapperLollipop(filters, settings, callback, handler, offloadedFilteringSupported);
             mWrappers.put(callback, wrapper);
         }
 
@@ -168,22 +169,22 @@ import java.util.Map;
 
     private final class ScanCallbackWrapperLollipop extends ScanCallbackWrapper {
 
-	    private final boolean offloadedFilteringSupported;
+        private final boolean mOffloadedFilteringSupported;
         private long mLastBatchTimestamp;
 
-        ScanCallbackWrapperLollipop(@NonNull List<ScanFilter> filters, @NonNull ScanSettings settings, @NonNull ScanCallback callback, @NonNull Handler handler, boolean offloadedFilteringSupported) {
+        private ScanCallbackWrapperLollipop(@NonNull final List<ScanFilter> filters, @NonNull final ScanSettings settings, @NonNull final ScanCallback callback, @NonNull final Handler handler, final boolean offloadedFilteringSupported) {
             super(filters, settings, callback, handler);
-            this.offloadedFilteringSupported = offloadedFilteringSupported;
+            this.mOffloadedFilteringSupported = offloadedFilteringSupported;
         }
 
         @NonNull
         private final android.bluetooth.le.ScanCallback mNativeCallback = new android.bluetooth.le.ScanCallback() {
             @Override
-            public void onScanResult(int callbackType, final android.bluetooth.le.ScanResult nativeScanResult) {
+            public void onScanResult(final int callbackType, final android.bluetooth.le.ScanResult nativeScanResult) {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        ScanResult result = fromNativeScanResult(nativeScanResult);
+                        final ScanResult result = fromNativeScanResult(nativeScanResult);
                         handleScanResult(result);
                     }
                 });
@@ -203,12 +204,12 @@ import java.util.Map;
                         mLastBatchTimestamp = now;
 
                         final List<ScanResult> results = new ArrayList<>();
-                        for (android.bluetooth.le.ScanResult nativeScanResult : nativeScanResults) {
-                            ScanResult result = fromNativeScanResult(nativeScanResult);
+                        for (final android.bluetooth.le.ScanResult nativeScanResult : nativeScanResults) {
+                            final ScanResult result = fromNativeScanResult(nativeScanResult);
                             results.add(result);
                         }
 
-                        handleScanResults(results, offloadedFilteringSupported);
+                        handleScanResults(results, mOffloadedFilteringSupported);
                     }
                 });
             }
@@ -243,7 +244,7 @@ import java.util.Map;
     }
 
     @NonNull
-        /* package */ ScanResult fromNativeScanResult(@NonNull android.bluetooth.le.ScanResult nativeScanResult) {
+        /* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult nativeScanResult) {
         final byte[] data = nativeScanResult.getScanRecord() != null ? nativeScanResult.getScanRecord().getBytes() : null;
         return new ScanResult(nativeScanResult.getDevice(), ScanRecord.parseFromBytes(data), nativeScanResult.getRssi(), nativeScanResult.getTimestampNanos());
     }

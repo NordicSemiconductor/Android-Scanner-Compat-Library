@@ -87,11 +87,12 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
 		boolean shouldStart;
-		final ScanCallbackWrapper wrapper = new ScanCallbackWrapper(filters, settings, callback, handler);
+
 		synchronized (mWrappers) {
 			if (mWrappers.containsKey(callback)) {
 				throw new IllegalArgumentException("scanner already started with given callback");
 			}
+			final ScanCallbackWrapper wrapper = new ScanCallbackWrapper(filters, settings, callback, handler);
 			shouldStart = mWrappers.isEmpty();
 			mWrappers.put(callback, wrapper);
 		}
@@ -112,7 +113,7 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 	private void setPowerSaveSettings() {
 		long minRest = Long.MAX_VALUE, minScan = Long.MAX_VALUE;
 		synchronized (mWrappers) {
-			for (ScanCallbackWrapper wrapper : mWrappers.values()) {
+			for (final ScanCallbackWrapper wrapper : mWrappers.values()) {
 				final ScanSettings settings = wrapper.mScanSettings;
 				if (settings.hasPowerSaveMode()) {
 					if (minRest > settings.getPowerSaveRest()) {
@@ -142,19 +143,26 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 	@SuppressWarnings("deprecation")
 	public void stopScan(@NonNull final ScanCallback callback) {
 		boolean shouldStop;
+		ScanCallbackWrapper wrapper;
 		synchronized (mWrappers) {
-			final ScanCallbackWrapper wrapper = mWrappers.get(callback);
+			wrapper = mWrappers.get(callback);
 			if (wrapper == null)
 				return;
 
 			mWrappers.remove(callback);
 			shouldStop = mWrappers.isEmpty();
-			wrapper.close();
 		}
+
+		wrapper.close();
 
 		setPowerSaveSettings();
 
 		if (shouldStop) {
+			final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+			if (adapter != null) {
+				adapter.stopLeScan(mCallback);
+			}
+
 			if (mHandler != null) {
 				mHandler.removeCallbacksAndMessages(null);
 			}
@@ -162,11 +170,6 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 			if (mHandlerThread != null) {
 				mHandlerThread.quitSafely();
 				mHandlerThread = null;
-			}
-
-			final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-			if (adapter != null) {
-				adapter.stopLeScan(mCallback);
 			}
 		}
 	}
@@ -179,11 +182,13 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 		if (callback == null) {
 			throw new IllegalArgumentException("callback cannot be null!");
 		}
+		ScanCallbackWrapper wrapper;
 		synchronized (mWrappers) {
-			ScanCallbackWrapper wrapper = mWrappers.get(callback);
-			if (wrapper != null) {
-				wrapper.flushPendingScanResults();
-			}
+			wrapper = mWrappers.get(callback);
+		}
+
+		if (wrapper != null) {
+			wrapper.flushPendingScanResults();
 		}
 	}
 

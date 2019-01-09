@@ -189,10 +189,10 @@ public abstract class BluetoothLeScannerCompat {
 
 	/* package */ static class ScanCallbackWrapper {
 
-		@NonNull private final Object LOCK = new Object();
+		@NonNull private final Object mLOCK = new Object();
 
-		private final boolean emulateBatching;
-		private final boolean emulateFoundOrLostCallbackType;
+		private final boolean mEmulateBatching;
+		private final boolean mEmulateFoundOrLostCallbackType;
 
 		@NonNull final List<ScanFilter> mFilters;
 		@NonNull final ScanSettings mScanSettings;
@@ -222,7 +222,7 @@ public abstract class BluetoothLeScannerCompat {
 			public void run() {
 				final long now = SystemClock.elapsedRealtimeNanos();
 
-				synchronized (LOCK) {
+				synchronized (mLOCK) {
 					Iterator<ScanResult> iterator = mDevicesInRange.values().iterator();
 					while (iterator.hasNext()) {
 						final ScanResult result = iterator.next();
@@ -254,19 +254,19 @@ public abstract class BluetoothLeScannerCompat {
 			mHandler = handler;
 
 			// Emulate other callback types
-			emulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES && !settings.getUseHardwareCallbackTypesIfSupported();
+			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES && !settings.getUseHardwareCallbackTypesIfSupported();
 
 			// Emulate batching
-			final long delay = settings.getReportDelayMillis();
-			emulateBatching = delay > 0;
-			if (emulateBatching) {
+			final long delay = settings.getReportDelayMillis(); //What about getUseHardwareBatchingIfSupported() ?
+			mEmulateBatching = delay > 0;
+			if (mEmulateBatching) {
 				mHandler.postDelayed(mFlushPendingScanResultsTask, delay);
 			}
 		}
 
 		/* package */ void close() {
 			mHandler.removeCallbacksAndMessages(null);
-			synchronized (LOCK) {
+			synchronized (mLOCK) {
 				mDevicesInRange.clear();
 				mDevicesInBatch.clear();
 				mScanResults.clear();
@@ -274,8 +274,8 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void flushPendingScanResults() {
-			if (emulateBatching) {
-				synchronized (LOCK) {
+			if (mEmulateBatching) {
+				synchronized (mLOCK) {
 					mScanCallback.onBatchScanResults(new ArrayList<>(mScanResults));
 					mScanResults.clear();
 					mDevicesInBatch.clear();
@@ -290,19 +290,18 @@ public abstract class BluetoothLeScannerCompat {
 			final String deviceAddress = scanResult.getDevice().getAddress();
 
 			// Notify if a new device was found and callback type is FIRST MATCH
-			if (emulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+			if (mEmulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
 				// Save the fist result or update tle old one with new data
+
+				ScanResult previousResult;
+
 				synchronized (mDevicesInRange) {
-					final ScanResult previousResult = mDevicesInRange.put(deviceAddress, scanResult);
-					if (previousResult == null) {
-						if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0) {
-							mHandler.post(new Runnable() {
-								@Override
-								public void run() {
-									mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
-								}
-							});
-						}
+					previousResult = mDevicesInRange.put(deviceAddress, scanResult);
+				}
+
+				if (previousResult == null) {
+					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0) {
+						mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
 					}
 				}
 
@@ -315,8 +314,8 @@ public abstract class BluetoothLeScannerCompat {
 				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value.
 				// If mDevicesInRange is empty, report delay > 0 means we are emulating hardware
 				// batching. Otherwise handleScanResults(List) is called, not this method.
-				if (emulateBatching) {
-					synchronized (LOCK) {
+				if (mEmulateBatching) {
+					synchronized (mLOCK) {
 						if (!mDevicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
 							mScanResults.add(scanResult);
 							mDevicesInBatch.add(deviceAddress);
@@ -335,7 +334,7 @@ public abstract class BluetoothLeScannerCompat {
 
 			if (!mFilters.isEmpty() && (!offloadedFilteringSupported || !mScanSettings.getUseHardwareFilteringIfSupported())) {
 				filteredResults = new ArrayList<>();
-				for (ScanResult result : results)
+				for (final ScanResult result : results)
 					if (matches(result))
 						filteredResults.add(result);
 			}
@@ -351,7 +350,7 @@ public abstract class BluetoothLeScannerCompat {
 			return false;
 		}
 
-		/* package */ void onScanManagerErrorCallback(int errorCode) {
+		/* package */ void onScanManagerErrorCallback(final int errorCode) {
 			mScanCallback.onScanFailed(errorCode);
 		}
 	}
