@@ -30,8 +30,10 @@ import android.support.annotation.NonNull;
 @TargetApi(Build.VERSION_CODES.M)
 /* package */ class BluetoothLeScannerImplMarshmallow extends BluetoothLeScannerImplLollipop {
 
-	/* package */ android.bluetooth.le.ScanSettings toImpl(@NonNull final BluetoothAdapter adapter,
-														   @NonNull final ScanSettings settings) {
+	@NonNull
+	@Override
+	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
+																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
 				new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
 

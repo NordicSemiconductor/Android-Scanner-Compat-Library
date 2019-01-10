@@ -30,8 +30,10 @@ import android.support.annotation.NonNull;
 @TargetApi(Build.VERSION_CODES.O)
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
 
-	/* package */ android.bluetooth.le.ScanSettings toImpl(@NonNull final BluetoothAdapter adapter,
-														   @NonNull final ScanSettings settings) {
+	@NonNull
+    @Override
+	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
+																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
 				new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
 
@@ -49,7 +51,9 @@ import android.support.annotation.NonNull;
 		return builder.build();
 	}
 
-	/* package */ ScanResult toImpl(@NonNull final android.bluetooth.le.ScanResult _result) {
+	@NonNull
+    @Override
+	/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult _result) {
 		// Calculate the important bits of Event Type
 		final int eventType = (_result.getDataStatus() << 5)
 				| (_result.isLegacy() ? ScanResult.ET_LEGACY_MASK : 0)

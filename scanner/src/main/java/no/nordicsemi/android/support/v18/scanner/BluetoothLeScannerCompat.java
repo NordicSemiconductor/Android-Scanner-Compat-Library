@@ -32,10 +32,13 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class provides methods to perform scan related operations for Bluetooth LE devices. An
@@ -49,15 +52,15 @@ import java.util.Map;
  *
  * @see ScanFilter
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class BluetoothLeScannerCompat {
+
 	private static BluetoothLeScannerCompat mInstance;
 
 	/**
 	 * Returns the scanner compat object
 	 * @return scanner implementation
 	 */
-	public static BluetoothLeScannerCompat getScanner() {
+	public synchronized static BluetoothLeScannerCompat getScanner() {
 		if (mInstance != null)
 			return mInstance;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -69,8 +72,7 @@ public abstract class BluetoothLeScannerCompat {
 		return mInstance = new BluetoothLeScannerImplJB();
 	}
 
-	/* package */ BluetoothLeScannerCompat() {
-	}
+	/* package */ BluetoothLeScannerCompat() {}
 
 	/**
 	 * Start Bluetooth LE scan with default parameters and no filters. The scan results will be
@@ -84,6 +86,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback used to deliver scan results.
 	 * @throws IllegalArgumentException If {@code callback} is null.
 	 */
+	@SuppressWarnings("WeakerAccess")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void startScan(@NonNull final ScanCallback callback) {
 		//noinspection ConstantConditions
@@ -91,7 +94,7 @@ public abstract class BluetoothLeScannerCompat {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(null, new ScanSettings.Builder().build(), callback, handler);
+		startScanInternal(Collections.<ScanFilter>emptyList(), new ScanSettings.Builder().build(), callback, handler);
 	}
 
 	/**
@@ -107,6 +110,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback used to deliver scan results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
+	@SuppressWarnings("unused")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void startScan(@Nullable final List<ScanFilter> filters,
 						  @Nullable final ScanSettings settings,
@@ -116,7 +120,7 @@ public abstract class BluetoothLeScannerCompat {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(filters, settings != null ? settings : new ScanSettings.Builder().build(),
+		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(), settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler);
 	}
 
@@ -134,6 +138,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param handler  Optional handler used to deliver results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
+	@SuppressWarnings("unused")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void startScan(@Nullable final List<ScanFilter> filters,
 						  @Nullable final ScanSettings settings,
@@ -143,7 +148,7 @@ public abstract class BluetoothLeScannerCompat {
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
-		startScanInternal(filters, settings != null ? settings : new ScanSettings.Builder().build(),
+		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(), settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler != null ? handler : new Handler(Looper.getMainLooper()));
 	}
 
@@ -156,10 +161,10 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param handler  Handler used to deliver results.
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	/* package */ abstract void startScanInternal(@Nullable final List<ScanFilter> filters,
-												  @NonNull  final ScanSettings settings,
-												  @NonNull  final ScanCallback callback,
-												  @NonNull  final Handler handler);
+	/* package */ abstract void startScanInternal(@NonNull List<ScanFilter> filters,
+												  @NonNull ScanSettings settings,
+												  @NonNull ScanCallback callback,
+												  @NonNull Handler handler);
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
@@ -169,7 +174,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback the callback used to start scanning.
 	 */
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
-	public abstract void stopScan(@NonNull final ScanCallback callback);
+	public abstract void stopScan(@NonNull ScanCallback callback);
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth
@@ -179,21 +184,29 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback of the Bluetooth LE Scan, it has to be the same instance as the one
 	 *            used to start scan.
 	 */
-	public abstract void flushPendingScanResults(@NonNull final ScanCallback callback);
+	@SuppressWarnings("unused")
+	public abstract void flushPendingScanResults(@NonNull ScanCallback callback);
 
 	/* package */ static class ScanCallbackWrapper {
-		private final List<ScanFilter> mFilters;
-		private final ScanSettings mScanSettings;
-		private final ScanCallback mScanCallback;
-		private final List<ScanResult> mScanResults;
-		private final List<String> mDevicesInBatch;
-		private final Handler mHandler;
 
-		/** A task, called periodically, that notifies about match lost. */
-		private MatchLostNotifierTask mMatchLostNotifierTask;
+		@NonNull private final Object mLOCK = new Object();
+
+		private final boolean mEmulateBatching;
+		private final boolean mEmulateFoundOrLostCallbackType;
+
+		@NonNull final List<ScanFilter> mFilters;
+		@NonNull final ScanSettings mScanSettings;
+		@NonNull final ScanCallback mScanCallback;
+		@NonNull final Handler mHandler;
+
+		@NonNull private final List<ScanResult> mScanResults = new ArrayList<>();
+
+		@NonNull private final Set<String> mDevicesInBatch = new HashSet<>();
+
 		/** A collection of scan result of devices in range. */
-		private final Map<String, ScanResult> mDevicesInRange;
+		@NonNull private final Map<String, ScanResult> mDevicesInRange = new HashMap<>();
 
+		@NonNull
 		private final Runnable mFlushPendingScanResultsTask = new Runnable() {
 			@Override
 			public void run() {
@@ -202,142 +215,107 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		};
 
-		/* package */ ScanCallbackWrapper(@Nullable final List<ScanFilter> filters,
+		/** A task, called periodically, that notifies about match lost. */
+		@NonNull
+		private final Runnable mMatchLostNotifierTask = new Runnable() {
+			@Override
+			public void run() {
+				final long now = SystemClock.elapsedRealtimeNanos();
+
+				synchronized (mLOCK) {
+					Iterator<ScanResult> iterator = mDevicesInRange.values().iterator();
+					while (iterator.hasNext()) {
+						final ScanResult result = iterator.next();
+						if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
+							iterator.remove();
+							mHandler.post(new Runnable() {
+								@Override
+								public void run() {
+									mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, result);
+								}
+							});
+						}
+					}
+
+					if (!mDevicesInRange.isEmpty()) {
+						mHandler.postDelayed(this, mScanSettings.getMatchLostTaskInterval());
+					}
+				}
+			}
+		};
+
+		/* package */ ScanCallbackWrapper(@NonNull final List<ScanFilter> filters,
 										  @NonNull final ScanSettings settings,
 										  @NonNull final ScanCallback callback,
 										  @NonNull final Handler handler) {
-			mFilters = filters;
+			mFilters = Collections.unmodifiableList(filters);
 			mScanSettings = settings;
 			mScanCallback = callback;
 			mHandler = handler;
 
 			// Emulate other callback types
-			if (settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
-					&& !settings.getUseHardwareCallbackTypesIfSupported()) {
-				mDevicesInRange = new HashMap<>();
-			} else {
-				mDevicesInRange = null;
-			}
+			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES && !settings.getUseHardwareCallbackTypesIfSupported();
 
 			// Emulate batching
-			final long delay = settings.getReportDelayMillis();
-			if (delay > 0) {
-				mScanResults = new ArrayList<>();
-				mDevicesInBatch = new ArrayList<>();
+			final long delay = settings.getReportDelayMillis(); //What about getUseHardwareBatchingIfSupported() ?
+			mEmulateBatching = delay > 0;
+			if (mEmulateBatching) {
 				mHandler.postDelayed(mFlushPendingScanResultsTask, delay);
-			} else {
-				mScanResults = null;
-				mDevicesInBatch = null;
 			}
 		}
 
 		/* package */ void close() {
-			if (mScanResults != null) {
-				new Handler(Looper.getMainLooper()).post(new Runnable() {
-					@Override
-					public void run() {
-						mHandler.removeCallbacks(mFlushPendingScanResultsTask);
-					}
-				});
-			}
-			if (mDevicesInRange != null) {
+			mHandler.removeCallbacksAndMessages(null);
+			synchronized (mLOCK) {
 				mDevicesInRange.clear();
+				mDevicesInBatch.clear();
+				mScanResults.clear();
 			}
-			if (mMatchLostNotifierTask != null) {
-				new Handler(Looper.getMainLooper()).post(new Runnable() {
-					@Override
-					public void run() {
-						mHandler.removeCallbacks(mMatchLostNotifierTask);
-					}
-				});
-				mMatchLostNotifierTask = null;
-			}
-		}
-
-		@NonNull
-		/* package */ ScanSettings getScanSettings() {
-			return mScanSettings;
-		}
-
-		@Nullable
-		/* package */ List<ScanFilter> getScanFilters() {
-			return mFilters;
-		}
-
-		@NonNull
-		/* package */ ScanCallback getScanCallback() {
-			return mScanCallback;
-		}
-
-		@NonNull
-		/* package */ Handler getHandler() {
-			return mHandler;
 		}
 
 		/* package */ void flushPendingScanResults() {
-			if (mScanResults != null) {
-				synchronized (mScanResults) {
-					mScanCallback.onBatchScanResults(mScanResults);
+			if (mEmulateBatching) {
+				synchronized (mLOCK) {
+					mScanCallback.onBatchScanResults(new ArrayList<>(mScanResults));
 					mScanResults.clear();
 					mDevicesInBatch.clear();
 				}
 			}
 		}
 
-		private class MatchLostNotifierTask implements Runnable {
-			private final List<ScanResult> mMatchLostScanResults = new ArrayList<>();
-
-			@Override
-			public void run() {
-				final long now = SystemClock.elapsedRealtimeNanos();
-
-				if (mDevicesInRange != null) {
-					final Collection<ScanResult> results = mDevicesInRange.values();
-					for (final ScanResult result : results) {
-						if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
-							mMatchLostScanResults.add(result);
-						}
-					}
-					if (!mMatchLostScanResults.isEmpty()) {
-						for (final ScanResult result : mMatchLostScanResults) {
-							mDevicesInRange.remove(result.getDevice().getAddress());
-							onFoundOrLost(false, result);
-						}
-						mMatchLostScanResults.clear();
-					}
-				}
-				mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
-			}
-		}
-
 		/* package */ void handleScanResult(@NonNull final ScanResult scanResult) {
-			if (mFilters != null && !mFilters.isEmpty() && !matches(scanResult))
+			if (!mFilters.isEmpty() && !matches(scanResult))
 				return;
 
 			final String deviceAddress = scanResult.getDevice().getAddress();
 
 			// Notify if a new device was found and callback type is FIRST MATCH
-			if (mDevicesInRange != null) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+			if (mEmulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
 				// Save the fist result or update tle old one with new data
-				final ScanResult previousResult = mDevicesInRange.put(deviceAddress, scanResult);
+
+				ScanResult previousResult;
+
+				synchronized (mDevicesInRange) {
+					previousResult = mDevicesInRange.put(deviceAddress, scanResult);
+				}
+
 				if (previousResult == null) {
-					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0)
-						onFoundOrLost(true, scanResult);
+					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0) {
+						mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
+					}
 				}
 
 				// In case user wants to be notified about match lost, we need to start a task that
 				// will check periodically
-				if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0
-						&& mMatchLostNotifierTask == null) {
-					mMatchLostNotifierTask = new MatchLostNotifierTask();
+				if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0) {
 					mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
 				}
 			} else {
 				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value.
 				// If mDevicesInRange is empty, report delay > 0 means we are emulating hardware
 				// batching. Otherwise handleScanResults(List) is called, not this method.
-				if (mScanSettings.getReportDelayMillis() > 0) {
-					synchronized (mScanResults) {
+				if (mEmulateBatching) {
+					synchronized (mLOCK) {
 						if (!mDevicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
 							mScanResults.add(scanResult);
 							mDevicesInBatch.add(deviceAddress);
@@ -345,7 +323,8 @@ public abstract class BluetoothLeScannerCompat {
 					}
 					return;
 				}
-				onScanResult(scanResult);
+
+				mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
 			}
 		}
 
@@ -353,14 +332,14 @@ public abstract class BluetoothLeScannerCompat {
 											 final boolean offloadedFilteringSupported) {
 			List<ScanResult> filteredResults = results;
 
-			if (mFilters != null && (!offloadedFilteringSupported || !mScanSettings.getUseHardwareFilteringIfSupported())) {
+			if (!mFilters.isEmpty() && (!offloadedFilteringSupported || !mScanSettings.getUseHardwareFilteringIfSupported())) {
 				filteredResults = new ArrayList<>();
 				for (final ScanResult result : results)
 					if (matches(result))
 						filteredResults.add(result);
 			}
 
-			onBatchScanResults(filteredResults);
+			mScanCallback.onBatchScanResults(filteredResults);
 		}
 
 		private boolean matches(@NonNull final ScanResult result) {
@@ -371,44 +350,8 @@ public abstract class BluetoothLeScannerCompat {
 			return false;
 		}
 
-		private void onScanResult(@NonNull final ScanResult scanResult) {
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
-				}
-			});
-		}
-
-		private void onBatchScanResults(@NonNull final List<ScanResult> results) {
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					mScanCallback.onBatchScanResults(results);
-				}
-			});
-		}
-
-		private void onFoundOrLost(final boolean onFound, @NonNull final ScanResult scanResult) {
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					if (onFound) {
-						mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
-					} else {
-						mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, scanResult);
-					}
-				}
-			});
-		}
-
 		/* package */ void onScanManagerErrorCallback(final int errorCode) {
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					mScanCallback.onScanFailed(errorCode);
-				}
-			});
+			mScanCallback.onScanFailed(errorCode);
 		}
 	}
 }

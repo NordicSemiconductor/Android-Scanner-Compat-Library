@@ -54,7 +54,7 @@ public class BluetoothLeScannerImplOreoTest {
 
 			// Convert to support.v18.ScanResult
 			final BluetoothLeScannerImplOreo impl = new BluetoothLeScannerImplOreo();
-			final ScanResult result = impl.toImpl(_result);
+			final ScanResult result = impl.fromNativeScanResult(_result);
 
 			// Validate
 			assertEquals(_result.isLegacy(), result.isLegacy());
