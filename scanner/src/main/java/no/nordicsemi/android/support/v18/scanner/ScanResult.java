@@ -25,9 +25,10 @@ package no.nordicsemi.android.support.v18.scanner;
 import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-/**
+/**7
  * ScanResult for Bluetooth LE scan.
  */
 @SuppressWarnings({"WeakerAccess", "unused", "DeprecatedIsStillUsed"})
@@ -77,24 +78,26 @@ public final class ScanResult implements Parcelable {
 	static final int ET_CONNECTABLE_MASK = 0x01;
 
 	// Remote Bluetooth device.
-	private BluetoothDevice mDevice;
+	@SuppressWarnings("NullableProblems")
+	@NonNull
+	private BluetoothDevice device;
 
 	// Scan record, including advertising data and scan response data.
 	@Nullable
-	private ScanRecord mScanRecord;
+	private ScanRecord scanRecord;
 
 	// Received signal strength.
-	private int mRssi;
+	private int rssi;
 
 	// Device timestamp when the result was last seen.
-	private long mTimestampNanos;
+	private long timestampNanos;
 
-	private int mEventType;
-	private int mPrimaryPhy;
-	private int mSecondaryPhy;
-	private int mAdvertisingSid;
-	private int mTxPower;
-	private int mPeriodicAdvertisingInterval;
+	private int eventType;
+	private int primaryPhy;
+	private int secondaryPhy;
+	private int advertisingSid;
+	private int txPower;
+	private int periodicAdvertisingInterval;
 
 	/**
 	 * Constructs a new ScanResult.
@@ -106,18 +109,18 @@ public final class ScanResult implements Parcelable {
 	 * @deprecated use {@link #ScanResult(BluetoothDevice, int, int, int, int, int, int, int, ScanRecord, long)}
 	 */
 	@SuppressWarnings("PointlessBitwiseExpression")
-	public ScanResult(BluetoothDevice device, @Nullable ScanRecord scanRecord, int rssi,
-					  long timestampNanos) {
-		mDevice = device;
-		mScanRecord = scanRecord;
-		mRssi = rssi;
-		mTimestampNanos = timestampNanos;
-		mEventType = (DATA_COMPLETE << 5) | ET_LEGACY_MASK | ET_CONNECTABLE_MASK;
-		mPrimaryPhy = 1; // BluetoothDevice.PHY_LE_1M;
-		mSecondaryPhy = PHY_UNUSED;
-		mAdvertisingSid = SID_NOT_PRESENT;
-		mTxPower = 127;
-		mPeriodicAdvertisingInterval = 0;
+	public ScanResult(@NonNull final BluetoothDevice device, @Nullable final ScanRecord scanRecord,
+					  int rssi, long timestampNanos) {
+		this.device = device;
+		this.scanRecord = scanRecord;
+		this.rssi = rssi;
+		this.timestampNanos = timestampNanos;
+		this.eventType = (DATA_COMPLETE << 5) | ET_LEGACY_MASK | ET_CONNECTABLE_MASK;
+		this.primaryPhy = 1; // BluetoothDevice.PHY_LE_1M;
+		this.secondaryPhy = PHY_UNUSED;
+		this.advertisingSid = SID_NOT_PRESENT;
+		this.txPower = 127;
+		this.periodicAdvertisingInterval = 0;
 	}
 
 	/**
@@ -134,64 +137,59 @@ public final class ScanResult implements Parcelable {
 	 * @param scanRecord Scan record including both advertising data and scan response data.
 	 * @param timestampNanos Timestamp at which the scan result was observed.
 	 */
-	public ScanResult(BluetoothDevice device, int eventType, int primaryPhy, int secondaryPhy,
-					  int advertisingSid, int txPower, int rssi, int periodicAdvertisingInterval,
-					  @Nullable ScanRecord scanRecord, long timestampNanos) {
-		mDevice = device;
-		mEventType = eventType;
-		mPrimaryPhy = primaryPhy;
-		mSecondaryPhy = secondaryPhy;
-		mAdvertisingSid = advertisingSid;
-		mTxPower = txPower;
-		mRssi = rssi;
-		mPeriodicAdvertisingInterval = periodicAdvertisingInterval;
-		mScanRecord = scanRecord;
-		mTimestampNanos = timestampNanos;
+	public ScanResult(@NonNull final BluetoothDevice device, final int eventType,
+					  final int primaryPhy, final int secondaryPhy,
+					  final int advertisingSid, final int txPower, final int rssi,
+					  final int periodicAdvertisingInterval,
+					  @Nullable final ScanRecord scanRecord, final long timestampNanos) {
+		this.device = device;
+		this.eventType = eventType;
+		this.primaryPhy = primaryPhy;
+		this.secondaryPhy = secondaryPhy;
+		this.advertisingSid = advertisingSid;
+		this.txPower = txPower;
+		this.rssi = rssi;
+		this.periodicAdvertisingInterval = periodicAdvertisingInterval;
+		this.scanRecord = scanRecord;
+		this.timestampNanos = timestampNanos;
 	}
 
-	private ScanResult(Parcel in) {
+	private ScanResult(final Parcel in) {
 		readFromParcel(in);
 	}
 
 	@Override
-	public void writeToParcel(Parcel dest, int flags) {
-		if (mDevice != null) {
+	public void writeToParcel(final Parcel dest, final int flags) {
+		device.writeToParcel(dest, flags);
+		if (scanRecord != null) {
 			dest.writeInt(1);
-			mDevice.writeToParcel(dest, flags);
+			dest.writeByteArray(scanRecord.getBytes());
 		} else {
 			dest.writeInt(0);
 		}
-		if (mScanRecord != null) {
-			dest.writeInt(1);
-			dest.writeByteArray(mScanRecord.getBytes());
-		} else {
-			dest.writeInt(0);
-		}
-		dest.writeInt(mRssi);
-		dest.writeLong(mTimestampNanos);
-		dest.writeInt(mEventType);
-		dest.writeInt(mPrimaryPhy);
-		dest.writeInt(mSecondaryPhy);
-		dest.writeInt(mAdvertisingSid);
-		dest.writeInt(mTxPower);
-		dest.writeInt(mPeriodicAdvertisingInterval);
+		dest.writeInt(rssi);
+		dest.writeLong(timestampNanos);
+		dest.writeInt(eventType);
+		dest.writeInt(primaryPhy);
+		dest.writeInt(secondaryPhy);
+		dest.writeInt(advertisingSid);
+		dest.writeInt(txPower);
+		dest.writeInt(periodicAdvertisingInterval);
 	}
 
-	private void readFromParcel(Parcel in) {
+	private void readFromParcel(final Parcel in) {
+		device = BluetoothDevice.CREATOR.createFromParcel(in);
 		if (in.readInt() == 1) {
-			mDevice = BluetoothDevice.CREATOR.createFromParcel(in);
+			scanRecord = ScanRecord.parseFromBytes(in.createByteArray());
 		}
-		if (in.readInt() == 1) {
-			mScanRecord = ScanRecord.parseFromBytes(in.createByteArray());
-		}
-		mRssi = in.readInt();
-		mTimestampNanos = in.readLong();
-		mEventType = in.readInt();
-		mPrimaryPhy = in.readInt();
-		mSecondaryPhy = in.readInt();
-		mAdvertisingSid = in.readInt();
-		mTxPower = in.readInt();
-		mPeriodicAdvertisingInterval = in.readInt();
+		rssi = in.readInt();
+		timestampNanos = in.readLong();
+		eventType = in.readInt();
+		primaryPhy = in.readInt();
+		secondaryPhy = in.readInt();
+		advertisingSid = in.readInt();
+		txPower = in.readInt();
+		periodicAdvertisingInterval = in.readInt();
 	}
 
 	@Override
@@ -202,8 +200,9 @@ public final class ScanResult implements Parcelable {
 	/**
 	 * Returns the remote Bluetooth device identified by the Bluetooth device address.
 	 */
+	@NonNull
 	public BluetoothDevice getDevice() {
-		return mDevice;
+		return device;
 	}
 
 	/**
@@ -211,21 +210,21 @@ public final class ScanResult implements Parcelable {
 	 */
 	@Nullable
 	public ScanRecord getScanRecord() {
-		return mScanRecord;
+		return scanRecord;
 	}
 
 	/**
 	 * Returns the received signal strength in dBm. The valid range is [-127, 126].
 	 */
 	public int getRssi() {
-		return mRssi;
+		return rssi;
 	}
 
 	/**
 	 * Returns timestamp since boot when the scan record was observed.
 	 */
 	public long getTimestampNanos() {
-		return mTimestampNanos;
+		return timestampNanos;
 	}
 
 	/**
@@ -234,14 +233,14 @@ public final class ScanResult implements Parcelable {
 	 * as specified in the Bluetooth Core Specification v5.
 	 */
 	public boolean isLegacy() {
-		return (mEventType & ET_LEGACY_MASK) != 0;
+		return (eventType & ET_LEGACY_MASK) != 0;
 	}
 
 	/**
 	 * Returns true if this object represents connectable scan result.
 	 */
 	public boolean isConnectable() {
-		return (mEventType & ET_CONNECTABLE_MASK) != 0;
+		return (eventType & ET_CONNECTABLE_MASK) != 0;
 	}
 
 	/**
@@ -251,7 +250,7 @@ public final class ScanResult implements Parcelable {
 	 */
 	public int getDataStatus() {
 		// return bit 5 and 6
-		return (mEventType >> 5) & 0x03;
+		return (eventType >> 5) & 0x03;
 	}
 
 	/**
@@ -260,7 +259,7 @@ public final class ScanResult implements Parcelable {
 	 * Can be one of {@link BluetoothDevice#PHY_LE_1M} or
 	 * {@link BluetoothDevice#PHY_LE_CODED}.
 	 */
-	public int getPrimaryPhy() { return mPrimaryPhy; }
+	public int getPrimaryPhy() { return primaryPhy; }
 
 	/**
 	 * Returns the secondary Physical Layer
@@ -270,21 +269,21 @@ public final class ScanResult implements Parcelable {
 	 * or {@link ScanResult#PHY_UNUSED} - if the advertisement
 	 * was not received on a secondary physical channel.
 	 */
-	public int getSecondaryPhy() { return mSecondaryPhy; }
+	public int getSecondaryPhy() { return secondaryPhy; }
 
 	/**
 	 * Returns the advertising set id.
 	 * May return {@link ScanResult#SID_NOT_PRESENT} if
 	 * no set id was is present.
 	 */
-	public int getAdvertisingSid() { return mAdvertisingSid; }
+	public int getAdvertisingSid() { return advertisingSid; }
 
 	/**
 	 * Returns the transmit power in dBm.
 	 * Valid range is [-127, 126]. A value of {@link ScanResult#TX_POWER_NOT_PRESENT}
 	 * indicates that the TX power is not present.
 	 */
-	public int getTxPower() { return mTxPower; }
+	public int getTxPower() { return txPower; }
 
 	/**
 	 * Returns the periodic advertising interval in units of 1.25ms.
@@ -293,55 +292,55 @@ public final class ScanResult implements Parcelable {
 	 * advertising interval is not present.
 	 */
 	public int getPeriodicAdvertisingInterval() {
-		return mPeriodicAdvertisingInterval;
+		return periodicAdvertisingInterval;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mDevice, mRssi, mScanRecord, mTimestampNanos,
-				mEventType, mPrimaryPhy, mSecondaryPhy,
-				mAdvertisingSid, mTxPower,
-				mPeriodicAdvertisingInterval);
+		return Objects.hash(device, rssi, scanRecord, timestampNanos,
+				eventType, primaryPhy, secondaryPhy,
+				advertisingSid, txPower,
+				periodicAdvertisingInterval);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		ScanResult other = (ScanResult) obj;
-		return Objects.equals(mDevice, other.mDevice) && (mRssi == other.mRssi) &&
-				Objects.equals(mScanRecord, other.mScanRecord) &&
-				(mTimestampNanos == other.mTimestampNanos) &&
-				mEventType == other.mEventType &&
-				mPrimaryPhy == other.mPrimaryPhy &&
-				mSecondaryPhy == other.mSecondaryPhy &&
-				mAdvertisingSid == other.mAdvertisingSid &&
-				mTxPower == other.mTxPower &&
-				mPeriodicAdvertisingInterval == other.mPeriodicAdvertisingInterval;
+		final ScanResult other = (ScanResult) obj;
+		return Objects.equals(device, other.device) && (rssi == other.rssi) &&
+				Objects.equals(scanRecord, other.scanRecord) &&
+				(timestampNanos == other.timestampNanos) &&
+				eventType == other.eventType &&
+				primaryPhy == other.primaryPhy &&
+				secondaryPhy == other.secondaryPhy &&
+				advertisingSid == other.advertisingSid &&
+				txPower == other.txPower &&
+				periodicAdvertisingInterval == other.periodicAdvertisingInterval;
 	}
 
 	@Override
 	public String toString() {
-		return "ScanResult{" + "device=" + mDevice + ", scanRecord=" +
-				Objects.toString(mScanRecord) + ", rssi=" + mRssi +
-				", timestampNanos=" + mTimestampNanos + ", eventType=" + mEventType +
-				", primaryPhy=" + mPrimaryPhy + ", secondaryPhy=" + mSecondaryPhy +
-				", advertisingSid=" + mAdvertisingSid + ", txPower=" + mTxPower +
-				", periodicAdvertisingInterval=" + mPeriodicAdvertisingInterval + '}';
+		return "ScanResult{" + "device=" + device + ", scanRecord=" +
+				Objects.toString(scanRecord) + ", rssi=" + rssi +
+				", timestampNanos=" + timestampNanos + ", eventType=" + eventType +
+				", primaryPhy=" + primaryPhy + ", secondaryPhy=" + secondaryPhy +
+				", advertisingSid=" + advertisingSid + ", txPower=" + txPower +
+				", periodicAdvertisingInterval=" + periodicAdvertisingInterval + '}';
 	}
 
 	public static final Parcelable.Creator<ScanResult> CREATOR = new Creator<ScanResult>() {
 		@Override
-		public ScanResult createFromParcel(Parcel source) {
+		public ScanResult createFromParcel(final Parcel source) {
 			return new ScanResult(source);
 		}
 
 		@Override
-		public ScanResult[] newArray(int size) {
+		public ScanResult[] newArray(final int size) {
 			return new ScanResult[size];
 		}
 	};

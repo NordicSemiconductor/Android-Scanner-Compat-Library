@@ -54,22 +54,22 @@ import java.util.Set;
  */
 public abstract class BluetoothLeScannerCompat {
 
-	private static BluetoothLeScannerCompat mInstance;
+	private static BluetoothLeScannerCompat instance;
 
 	/**
 	 * Returns the scanner compat object
 	 * @return scanner implementation
 	 */
 	public synchronized static BluetoothLeScannerCompat getScanner() {
-		if (mInstance != null)
-			return mInstance;
+		if (instance != null)
+			return instance;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			return mInstance = new BluetoothLeScannerImplOreo();
+			return instance = new BluetoothLeScannerImplOreo();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-			return mInstance = new BluetoothLeScannerImplMarshmallow();
+			return instance = new BluetoothLeScannerImplMarshmallow();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-			return mInstance = new BluetoothLeScannerImplLollipop();
-		return mInstance = new BluetoothLeScannerImplJB();
+			return instance = new BluetoothLeScannerImplLollipop();
+		return instance = new BluetoothLeScannerImplJB();
 	}
 
 	/* package */ BluetoothLeScannerCompat() {}
@@ -194,55 +194,55 @@ public abstract class BluetoothLeScannerCompat {
 
 		@NonNull private final Object LOCK = new Object();
 
-		private final boolean mEmulateFiltering;
-		private final boolean mEmulateBatching;
-		private final boolean mEmulateFoundOrLostCallbackType;
+		private final boolean emulateFiltering;
+		private final boolean emulateBatching;
+		private final boolean emulateFoundOrLostCallbackType;
 
-		@NonNull final List<ScanFilter> mFilters;
-		@NonNull final ScanSettings mScanSettings;
-		@NonNull final ScanCallback mScanCallback;
-		@NonNull final Handler mHandler;
+		@NonNull final List<ScanFilter> filters;
+		@NonNull final ScanSettings scanSettings;
+		@NonNull final ScanCallback scanCallback;
+		@NonNull final Handler handler;
 
-		@NonNull private final List<ScanResult> mScanResults = new ArrayList<>();
+		@NonNull private final List<ScanResult> scanResults = new ArrayList<>();
 
-		@NonNull private final Set<String> mDevicesInBatch = new HashSet<>();
+		@NonNull private final Set<String> devicesInBatch = new HashSet<>();
 
 		/** A collection of scan result of devices in range. */
-		@NonNull private final Map<String, ScanResult> mDevicesInRange = new HashMap<>();
+		@NonNull private final Map<String, ScanResult> devicesInRange = new HashMap<>();
 
 		@NonNull
-		private final Runnable mFlushPendingScanResultsTask = new Runnable() {
+		private final Runnable flushPendingScanResultsTask = new Runnable() {
 			@Override
 			public void run() {
 				flushPendingScanResults();
-				mHandler.postDelayed(this, mScanSettings.getReportDelayMillis());
+				handler.postDelayed(this, scanSettings.getReportDelayMillis());
 			}
 		};
 
 		/** A task, called periodically, that notifies about match lost. */
 		@NonNull
-		private final Runnable mMatchLostNotifierTask = new Runnable() {
+		private final Runnable matchLostNotifierTask = new Runnable() {
 			@Override
 			public void run() {
 				final long now = SystemClock.elapsedRealtimeNanos();
 
 				synchronized (LOCK) {
-					final Iterator<ScanResult> iterator = mDevicesInRange.values().iterator();
+					final Iterator<ScanResult> iterator = devicesInRange.values().iterator();
 					while (iterator.hasNext()) {
 						final ScanResult result = iterator.next();
-						if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
+						if (result.getTimestampNanos() < now - scanSettings.getMatchLostDeviceTimeout()) {
 							iterator.remove();
-							mHandler.post(new Runnable() {
+							handler.post(new Runnable() {
 								@Override
 								public void run() {
-									mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, result);
+									scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, result);
 								}
 							});
 						}
 					}
 
-					if (!mDevicesInRange.isEmpty()) {
-						mHandler.postDelayed(this, mScanSettings.getMatchLostTaskInterval());
+					if (!devicesInRange.isEmpty()) {
+						handler.postDelayed(this, scanSettings.getMatchLostTaskInterval());
 					}
 				}
 			}
@@ -254,114 +254,114 @@ public abstract class BluetoothLeScannerCompat {
 										  @NonNull final ScanSettings settings,
 										  @NonNull final ScanCallback callback,
 										  @NonNull final Handler handler) {
-			mFilters = Collections.unmodifiableList(filters);
-			mScanSettings = settings;
-			mScanCallback = callback;
-			mHandler = handler;
+			this.filters = Collections.unmodifiableList(filters);
+            this.scanSettings = settings;
+            this.scanCallback = callback;
+			this.handler = handler;
 
 			// Emulate other callback types
 			final boolean callbackTypesSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+			emulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
 					&& (!callbackTypesSupported || !settings.getUseHardwareCallbackTypesIfSupported());
 
 			// Emulate filtering
-			mEmulateFiltering = !filters.isEmpty() && (!offloadedFilteringSupported || !settings.getUseHardwareFilteringIfSupported());
+			emulateFiltering = !filters.isEmpty() && (!offloadedFilteringSupported || !settings.getUseHardwareFilteringIfSupported());
 
 			// Emulate batching
 			final long delay = settings.getReportDelayMillis();
-			mEmulateBatching = delay > 0 && (!offloadedBatchingSupported || !settings.getUseHardwareBatchingIfSupported());
-			if (mEmulateBatching) {
-				mHandler.postDelayed(mFlushPendingScanResultsTask, delay);
+			emulateBatching = delay > 0 && (!offloadedBatchingSupported || !settings.getUseHardwareBatchingIfSupported());
+			if (emulateBatching) {
+				handler.postDelayed(flushPendingScanResultsTask, delay);
 			}
 		}
 
 		/* package */ void close() {
-			mHandler.removeCallbacksAndMessages(null);
+			handler.removeCallbacksAndMessages(null);
 			synchronized (LOCK) {
-				mDevicesInRange.clear();
-				mDevicesInBatch.clear();
-				mScanResults.clear();
+				devicesInRange.clear();
+				devicesInBatch.clear();
+				scanResults.clear();
 			}
 		}
 
 		/* package */ void flushPendingScanResults() {
-			if (mEmulateBatching) {
+			if (emulateBatching) {
 				synchronized (LOCK) {
-					mScanCallback.onBatchScanResults(new ArrayList<>(mScanResults));
-					mScanResults.clear();
-					mDevicesInBatch.clear();
+					scanCallback.onBatchScanResults(new ArrayList<>(scanResults));
+					scanResults.clear();
+					devicesInBatch.clear();
 				}
 			}
 		}
 
 		/* package */ void handleScanResult(@NonNull final ScanResult scanResult) {
-			if (!mFilters.isEmpty() && !matches(scanResult))
+			if (!filters.isEmpty() && !matches(scanResult))
 				return;
 
 			final String deviceAddress = scanResult.getDevice().getAddress();
 
 			// Notify if a new device was found and callback type is FIRST MATCH
-			if (mEmulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+			if (emulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
 				ScanResult previousResult;
 				boolean firstResult;
-				synchronized (mDevicesInRange) {
+				synchronized (devicesInRange) {
 					// The periodic task will be started only on the first result
-					firstResult = mDevicesInRange.isEmpty();
+					firstResult = devicesInRange.isEmpty();
 					// Save the first result or update the old one with new data
-					previousResult = mDevicesInRange.put(deviceAddress, scanResult);
+					previousResult = devicesInRange.put(deviceAddress, scanResult);
 				}
 
 				if (previousResult == null) {
-					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0) {
-						mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
+					if ((scanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_FIRST_MATCH) > 0) {
+						scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_FIRST_MATCH, scanResult);
 					}
 				}
 
 				// In case user wants to be notified about match lost, we need to start a task that
 				// will check the timestamp periodically
 				if (firstResult) {
-					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0) {
-						mHandler.removeCallbacks(mMatchLostNotifierTask);
-						mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
+					if ((scanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0) {
+						handler.removeCallbacks(matchLostNotifierTask);
+						handler.postDelayed(matchLostNotifierTask, scanSettings.getMatchLostTaskInterval());
 					}
 				}
 			} else {
 				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value.
-				// If mDevicesInRange is empty, report delay > 0 means we are emulating hardware
+				// If devicesInRange is empty, report delay > 0 means we are emulating hardware
 				// batching. Otherwise handleScanResults(List) is called, not this method.
-				if (mEmulateBatching) {
+				if (emulateBatching) {
 					synchronized (LOCK) {
-						if (!mDevicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
-							mScanResults.add(scanResult);
-							mDevicesInBatch.add(deviceAddress);
+						if (!devicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
+							scanResults.add(scanResult);
+							devicesInBatch.add(deviceAddress);
 						}
 					}
 					return;
 				}
 
-				mScanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
+				scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
 			}
 		}
 
 		/* package */ void handleScanResults(@NonNull final List<ScanResult> results) {
 			List<ScanResult> filteredResults = results;
 
-			if (mEmulateFiltering) {
+			if (emulateFiltering) {
 				filteredResults = new ArrayList<>();
 				for (final ScanResult result : results)
 					if (matches(result))
 						filteredResults.add(result);
 			}
 
-			mScanCallback.onBatchScanResults(filteredResults);
+			scanCallback.onBatchScanResults(filteredResults);
 		}
 
 		/* package */ void handleScanError(final int errorCode) {
-			mScanCallback.onScanFailed(errorCode);
+			scanCallback.onScanFailed(errorCode);
 		}
 
 		private boolean matches(@NonNull final ScanResult result) {
-			for (final ScanFilter filter : mFilters) {
+			for (final ScanFilter filter : filters) {
 				if (filter.matches(result))
 					return true;
 			}

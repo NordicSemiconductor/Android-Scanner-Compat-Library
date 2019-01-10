@@ -32,7 +32,7 @@ import java.util.Arrays;
 	 * the result of {@link Arrays#deepEquals} if both arguments are arrays of reference types,
 	 * and the result of {@link #equals} otherwise.
 	 */
-	static boolean deepEquals(Object a, Object b) {
+	static boolean deepEquals(final Object a, final Object b) {
 		if (a == null || b == null) {
 			return a == b;
 		} else if (a instanceof Object[] && b instanceof Object[]) {
@@ -60,7 +60,7 @@ import java.util.Arrays;
 	/**
 	 * Null-safe equivalent of {@code a.equals(b)}.
 	 */
-	static boolean equals(Object a, Object b) {
+	static boolean equals(final Object a, final Object b) {
 		return (a == null) ? (b == null) : a.equals(b);
 	}
 
@@ -69,14 +69,14 @@ import java.util.Arrays;
 	 * This can be used to compute a hash code for an object's fields as follows:
 	 * {@code Objects.hash(a, b, c)}.
 	 */
-	static int hash(Object... values) {
+	static int hash(final Object... values) {
 		return Arrays.hashCode(values);
 	}
 
 	/**
 	 * Returns "null" for null or {@code o.toString()}.
 	 */
-	static String toString(Object o) {
+	static String toString(final Object o) {
 		return (o == null) ? "null" : o.toString();
 	}
 }

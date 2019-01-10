@@ -18,6 +18,7 @@ package no.nordicsemi.android.support.v18.scanner;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 import android.util.SparseArray;
 
@@ -36,14 +37,14 @@ class BluetoothLeUtils {
 	/**
 	 * Returns a string composed from a {@link SparseArray}.
 	 */
-	static String toString(SparseArray<byte[]> array) {
+	static String toString(@Nullable final SparseArray<byte[]> array) {
 		if (array == null) {
 			return "null";
 		}
 		if (array.size() == 0) {
 			return "{}";
 		}
-		StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 		buffer.append('{');
 		for (int i = 0; i < array.size(); ++i) {
 			buffer.append(array.keyAt(i)).append("=").append(Arrays.toString(array.valueAt(i)));
@@ -55,19 +56,19 @@ class BluetoothLeUtils {
 	/**
 	 * Returns a string composed from a {@link Map}.
 	 */
-	static <T> String toString(Map<T, byte[]> map) {
+	static <T> String toString(@Nullable final Map<T, byte[]> map) {
 		if (map == null) {
 			return "null";
 		}
 		if (map.isEmpty()) {
 			return "{}";
 		}
-		StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 		buffer.append('{');
-		Iterator<Map.Entry<T, byte[]>> it = map.entrySet().iterator();
+		final Iterator<Map.Entry<T, byte[]>> it = map.entrySet().iterator();
 		while (it.hasNext()) {
-			Map.Entry<T, byte[]> entry = it.next();
-			Object key = entry.getKey();
+			final Map.Entry<T, byte[]> entry = it.next();
+			final Object key = entry.getKey();
 			buffer.append(key).append("=").append(Arrays.toString(map.get(key)));
 			if (it.hasNext()) {
 				buffer.append(", ");
@@ -80,7 +81,8 @@ class BluetoothLeUtils {
 	/**
 	 * Check whether two {@link SparseArray} equal.
 	 */
-	static boolean equals(SparseArray<byte[]> array, SparseArray<byte[]> otherArray) {
+	static boolean equals(@Nullable final SparseArray<byte[]> array,
+						  @Nullable final SparseArray<byte[]> otherArray) {
 		if (array == otherArray) {
 			return true;
 		}
@@ -104,7 +106,7 @@ class BluetoothLeUtils {
 	/**
 	 * Check whether two {@link Map} equal.
 	 */
-	static <T> boolean equals(Map<T, byte[]> map, Map<T, byte[]> otherMap) {
+	static <T> boolean equals(@Nullable final Map<T, byte[]> map, Map<T, byte[]> otherMap) {
 		if (map == otherMap) {
 			return true;
 		}
@@ -133,7 +135,7 @@ class BluetoothLeUtils {
 	 *             {@link BluetoothAdapter#STATE_ON}.
 	 */
 	@RequiresPermission(Manifest.permission.BLUETOOTH)
-	static void checkAdapterStateOn(BluetoothAdapter adapter) {
+	static void checkAdapterStateOn(@Nullable final BluetoothAdapter adapter) {
 		if (adapter == null || adapter.getState() != BluetoothAdapter.STATE_ON) {
 			throw new IllegalStateException("BT Adapter is not turned ON");
 		}

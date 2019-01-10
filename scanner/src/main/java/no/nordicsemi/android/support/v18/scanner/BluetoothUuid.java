@@ -46,11 +46,11 @@ import java.util.UUID;
 	 * @return {@link ParcelUuid} parsed from bytes.
 	 * @throws IllegalArgumentException If the {@code uuidBytes} cannot be parsed.
 	 */
-	static ParcelUuid parseUuidFrom(byte[] uuidBytes) {
+	static ParcelUuid parseUuidFrom(final byte[] uuidBytes) {
 		if (uuidBytes == null) {
 			throw new IllegalArgumentException("uuidBytes cannot be null");
 		}
-		int length = uuidBytes.length;
+		final int length = uuidBytes.length;
 		if (length != UUID_BYTES_16_BIT && length != UUID_BYTES_32_BIT &&
 				length != UUID_BYTES_128_BIT) {
 			throw new IllegalArgumentException("uuidBytes length invalid - " + length);
@@ -58,9 +58,9 @@ import java.util.UUID;
 
 		// Construct a 128 bit UUID.
 		if (length == UUID_BYTES_128_BIT) {
-			ByteBuffer buf = ByteBuffer.wrap(uuidBytes).order(ByteOrder.LITTLE_ENDIAN);
-			long msb = buf.getLong(8);
-			long lsb = buf.getLong(0);
+			final ByteBuffer buf = ByteBuffer.wrap(uuidBytes).order(ByteOrder.LITTLE_ENDIAN);
+			final long msb = buf.getLong(8);
+			final long lsb = buf.getLong(0);
 			return new ParcelUuid(new UUID(msb, lsb));
 		}
 
@@ -76,8 +76,8 @@ import java.util.UUID;
 			shortUuid += (uuidBytes[2] & 0xFF) << 16;
 			shortUuid += (uuidBytes[3] & 0xFF) << 24;
 		}
-		long msb = BASE_UUID.getUuid().getMostSignificantBits() + (shortUuid << 32);
-		long lsb = BASE_UUID.getUuid().getLeastSignificantBits();
+		final long msb = BASE_UUID.getUuid().getMostSignificantBits() + (shortUuid << 32);
+		final long lsb = BASE_UUID.getUuid().getLeastSignificantBits();
 		return new ParcelUuid(new UUID(msb, lsb));
 	}
 }

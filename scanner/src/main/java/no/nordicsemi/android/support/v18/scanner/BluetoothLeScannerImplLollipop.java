@@ -41,7 +41,7 @@ import java.util.Map;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 /* package */ class BluetoothLeScannerImplLollipop extends BluetoothLeScannerCompat {
 
-	private final Map<ScanCallback, ScanCallbackWrapperLollipop> mWrappers = new HashMap<>();
+	private final Map<ScanCallback, ScanCallbackWrapperLollipop> wrappers = new HashMap<>();
 
 	/* package */ BluetoothLeScannerImplLollipop() {}
 
@@ -63,13 +63,13 @@ import java.util.Map;
 
 		ScanCallbackWrapperLollipop wrapper;
 
-		synchronized (mWrappers) {
-			if (mWrappers.containsKey(callback)) {
+		synchronized (wrappers) {
+			if (wrappers.containsKey(callback)) {
 				throw new IllegalArgumentException("scanner already started with given callback");
 			}
 			wrapper = new ScanCallbackWrapperLollipop(offloadedBatchingSupported,
 					offloadedFilteringSupported, filters, settings, callback, handler);
-			mWrappers.put(callback, wrapper);
+			wrappers.put(callback, wrapper);
 		}
 
 		final android.bluetooth.le.ScanSettings nativeScanSettings = toNativeScanSettings(adapter, settings);
@@ -77,7 +77,7 @@ import java.util.Map;
 		if (!filters.isEmpty() && offloadedFilteringSupported && settings.getUseHardwareFilteringIfSupported())
 			nativeScanFilters = toNativeScanFilters(filters);
 
-		scanner.startScan(nativeScanFilters, nativeScanSettings, wrapper.mNativeCallback);
+		scanner.startScan(nativeScanFilters, nativeScanSettings, wrapper.nativeCallback);
 	}
 
 	@Override
@@ -89,12 +89,12 @@ import java.util.Map;
 		}
 
 		ScanCallbackWrapperLollipop wrapper;
-		synchronized (mWrappers) {
-			wrapper = mWrappers.get(callback);
+		synchronized (wrappers) {
+			wrapper = wrappers.get(callback);
 			if (wrapper == null) {
 				return;
 			}
-			mWrappers.remove(callback);
+			wrappers.remove(callback);
 		}
 
 		wrapper.close();
@@ -107,7 +107,7 @@ import java.util.Map;
 		if (scanner == null)
 			return;
 
-		scanner.stopScan(wrapper.mNativeCallback);
+		scanner.stopScan(wrapper.nativeCallback);
 	}
 
 	@Override
@@ -121,20 +121,20 @@ import java.util.Map;
 		}
 
 		ScanCallbackWrapperLollipop wrapper;
-		synchronized (mWrappers) {
-			wrapper = mWrappers.get(callback);
+		synchronized (wrappers) {
+			wrapper = wrappers.get(callback);
 		}
 
 		if (wrapper == null) {
 			throw new IllegalArgumentException("callback not registered!");
 		}
 
-		final ScanSettings settings = wrapper.mScanSettings;
+		final ScanSettings settings = wrapper.scanSettings;
 		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported()) {
 			final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 			if (scanner == null)
 				return;
-			scanner.flushPendingScanResults(wrapper.mNativeCallback);
+			scanner.flushPendingScanResults(wrapper.nativeCallback);
 		} else {
 			wrapper.flushPendingScanResults();
 		}
@@ -192,12 +192,12 @@ import java.util.Map;
 		}
 
 		@NonNull
-		private final android.bluetooth.le.ScanCallback mNativeCallback = new android.bluetooth.le.ScanCallback() {
-			private long mLastBatchTimestamp;
+		private final android.bluetooth.le.ScanCallback nativeCallback = new android.bluetooth.le.ScanCallback() {
+			private long lastBatchTimestamp;
 
 			@Override
 			public void onScanResult(final int callbackType, final android.bluetooth.le.ScanResult nativeScanResult) {
-				mHandler.post(new Runnable() {
+				handler.post(new Runnable() {
 					@Override
 					public void run() {
 						final ScanResult result = fromNativeScanResult(nativeScanResult);
@@ -208,16 +208,16 @@ import java.util.Map;
 
 			@Override
 			public void onBatchScanResults(final List<android.bluetooth.le.ScanResult> nativeScanResults) {
-				mHandler.post(new Runnable() {
+				handler.post(new Runnable() {
 					@Override
 					public void run() {
 						// On several phones the onBatchScanResults is called twice for every batch.
 						// Skip the second call if came to early.
 						final long now = SystemClock.elapsedRealtime();
-						if (mLastBatchTimestamp > now - mScanSettings.getReportDelayMillis() + 5) {
+						if (lastBatchTimestamp > now - scanSettings.getReportDelayMillis() + 5) {
 							return;
 						}
-						mLastBatchTimestamp = now;
+						lastBatchTimestamp = now;
 
 						final List<ScanResult> results = new ArrayList<>();
 						for (final android.bluetooth.le.ScanResult nativeScanResult : nativeScanResults) {
@@ -232,22 +232,22 @@ import java.util.Map;
 
 			@Override
 			public void onScanFailed(final int errorCode) {
-				mHandler.post(new Runnable() {
+				handler.post(new Runnable() {
 					@Override
 					@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 					public void run() {
 						// We were able to determine offloaded batching and filtering before we started scan,
 						// but there is no method checking if callback types FIRST_MATCH and MATCH_LOST
 						// are supported. We get an error here it they are not.
-						if (mScanSettings.getUseHardwareCallbackTypesIfSupported()
-								&& mScanSettings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
+						if (scanSettings.getUseHardwareCallbackTypesIfSupported()
+								&& scanSettings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
 							// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5
 
 							// This feature seems to be not supported on your phone.
 							// Let's try to do pretty much the same in the code.
-							mScanSettings.disableUseHardwareCallbackTypes();
-							stopScan(mScanCallback);
-							startScanInternal(mFilters, mScanSettings, mScanCallback, mHandler);
+							scanSettings.disableUseHardwareCallbackTypes();
+							stopScan(scanCallback);
+							startScanInternal(filters, scanSettings, scanCallback, handler);
 							return;
 						}
 
