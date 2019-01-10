@@ -108,7 +108,6 @@ public final class ScanSettings implements Parcelable {
 	 */
 	public static final int MATCH_NUM_MAX_ADVERTISEMENT = 3;
 
-
 	/**
 	 * In Aggressive mode, hw will determine a match sooner even with feeble signal strength
 	 * and few number of sightings/match in a duration.
@@ -305,7 +304,7 @@ public final class ScanSettings implements Parcelable {
 
 	/**
 	 * Determine if we should do power-saving sleep on pre-Lollipop
-     */
+	 */
 	public boolean hasPowerSaveMode() {
 		return powerSaveRestInterval > 0 && powerSaveScanInterval > 0;
 	}
@@ -342,8 +341,8 @@ public final class ScanSettings implements Parcelable {
 		 * Set scan mode for Bluetooth LE scan.
 		 *
 		 * @param scanMode The scan mode can be one of {@link ScanSettings#SCAN_MODE_LOW_POWER},
-		 *            {@link ScanSettings#SCAN_MODE_BALANCED} or
-		 *            {@link ScanSettings#SCAN_MODE_LOW_LATENCY}.
+		 *                 {@link ScanSettings#SCAN_MODE_BALANCED} or
+		 *                 {@link ScanSettings#SCAN_MODE_LOW_LATENCY}.
 		 * @throws IllegalArgumentException If the {@code scanMode} is invalid.
 		 */
 		@NonNull
@@ -384,8 +383,13 @@ public final class ScanSettings implements Parcelable {
 		 * Set report delay timestamp for Bluetooth LE scan.
 		 *
 		 * @param reportDelayMillis Delay of report in milliseconds. Set to 0 to be notified of
-		 *            results immediately. Values &gt; 0 causes the scan results to be queued up and
-		 *            delivered after the requested delay or when the internal buffers fill up.
+		 *                          results immediately. Values &gt; 0 causes the scan results
+		 *                          to be queued up and delivered after the requested delay or
+		 *                          when the internal buffers fill up.<p>
+		 *                          For delays below 5000 ms (5 sec) the
+		 *                          {@link ScanCallback#onBatchScanResults(List)}
+		 *                          will be called in unreliable intervals, but starting from
+		 *                          around 5000 the intervals get even.
 		 * @throws IllegalArgumentException If {@code reportDelayMillis} &lt; 0.
 		 */
 		@NonNull
@@ -398,12 +402,12 @@ public final class ScanSettings implements Parcelable {
 		}
 
 		/**
-		 * Set the number of matches for Bluetooth LE scan filters hardware match
+		 * Set the number of matches for Bluetooth LE scan filters hardware match.
 		 *
 		 * @param numOfMatches The num of matches can be one of
-		 *              {@link ScanSettings#MATCH_NUM_ONE_ADVERTISEMENT} or
-		 *              {@link ScanSettings#MATCH_NUM_FEW_ADVERTISEMENT} or
-		 *              {@link ScanSettings#MATCH_NUM_MAX_ADVERTISEMENT}
+		 *                     {@link ScanSettings#MATCH_NUM_ONE_ADVERTISEMENT} or
+		 *                     {@link ScanSettings#MATCH_NUM_FEW_ADVERTISEMENT} or
+		 *                     {@link ScanSettings#MATCH_NUM_MAX_ADVERTISEMENT}
 		 * @throws IllegalArgumentException If the {@code matchMode} is invalid.
 		 */
 		@NonNull
@@ -420,8 +424,8 @@ public final class ScanSettings implements Parcelable {
 		 * Set match mode for Bluetooth LE scan filters hardware match
 		 *
 		 * @param matchMode The match mode can be one of
-		 *              {@link ScanSettings#MATCH_MODE_AGGRESSIVE} or
-		 *              {@link ScanSettings#MATCH_MODE_STICKY}
+		 *                  {@link ScanSettings#MATCH_MODE_AGGRESSIVE} or
+		 *                  {@link ScanSettings#MATCH_MODE_STICKY}
 		 * @throws IllegalArgumentException If the {@code matchMode} is invalid.
 		 */
 		@NonNull
@@ -458,9 +462,9 @@ public final class ScanSettings implements Parcelable {
 		 * Selecting an unsupported phy will result in failure to start scan.
 		 *
 		 * @param phy Can be one of
-		 *   {@link BluetoothDevice#PHY_LE_1M},
-		 *   {@link BluetoothDevice#PHY_LE_CODED} or
-		 *   {@link ScanSettings#PHY_LE_ALL_SUPPORTED}
+		 *            {@link BluetoothDevice#PHY_LE_1M},
+		 *            {@link BluetoothDevice#PHY_LE_CODED} or
+		 *            {@link ScanSettings#PHY_LE_ALL_SUPPORTED}
 		 */
 		@NonNull
 		public Builder setPhy(final int phy) {
@@ -476,8 +480,8 @@ public final class ScanSettings implements Parcelable {
 		 * See https://code.google.com/p/android/issues/detail?id=181561.
 		 *
 		 * @param use true to enable (default) hardware offload filtering.
-		 *                 If false a compat software filtering will be used
-		 *                 (uses much more resources).
+		 *            If false a compat software filtering will be used
+		 *            (uses much more resources).
 		 */
 		@NonNull
 		public Builder setUseHardwareFilteringIfSupported(final boolean use) {
@@ -495,7 +499,7 @@ public final class ScanSettings implements Parcelable {
 		 * hardware triggered callback will be called every 1500ms +-200ms.
 		 *
 		 * @param use true to enable (default) hardware offloaded batching if they are supported.
-		 *                 False to always use compat mechanism.
+		 *            False to always use compat mechanism.
 		 */
 		@NonNull
 		public Builder setUseHardwareBatchingIfSupported(final boolean use) {
@@ -507,14 +511,14 @@ public final class ScanSettings implements Parcelable {
 		 * This method may be used when callback type is set to a value different than
 		 * {@link #CALLBACK_TYPE_ALL_MATCHES}. When disabled, the Scanner Compat itself will
 		 * take care of reporting first match and match lost. The compat behaviour may differ
-		 * from the one natively supported on Android Marshmallow.
-		 *
+		 * from the one natively supported on Android Marshmallow or newer.
+		 * <p>
 		 * Also, in compat mode values set by {@link #setMatchMode(int)} and
 		 * {@link #setNumOfMatches(int)} are ignored.
 		 * Instead use {@link #setMatchOptions(long, long)} to set timer options.
 		 *
 		 * @param use true to enable (default) the offloaded match reporting if hardware supports it,
-		 *                 false to enable compat implementation.
+		 *            false to enable compat implementation.
 		 */
 		@NonNull
 		public Builder setUseHardwareCallbackTypesIfSupported(final boolean use) {
@@ -532,7 +536,7 @@ public final class ScanSettings implements Parcelable {
 		 *
 		 * @param deviceTimeoutMillis the time required for the device to be recognized as lost
 		 *                            (default {@link #MATCH_LOST_DEVICE_TIMEOUT_DEFAULT}).
-		 * @param taskIntervalMillis the task interval (default {@link #MATCH_LOST_TASK_INTERVAL_DEFAULT}).
+		 * @param taskIntervalMillis  the task interval (default {@link #MATCH_LOST_TASK_INTERVAL_DEFAULT}).
 		 */
 		@NonNull
 		public Builder setMatchOptions(final long deviceTimeoutMillis, final long taskIntervalMillis) {
@@ -552,7 +556,7 @@ public final class ScanSettings implements Parcelable {
 		 *
 		 * @param scanInterval interval in ms to scan at a time.
 		 * @param restInterval interval to sleep for without scanning before scanning again for
-		 *                              scanInterval.
+		 *                     scanInterval.
 		 */
 		@NonNull
 		public Builder setPowerSave(final long scanInterval, final long restInterval) {
@@ -569,8 +573,7 @@ public final class ScanSettings implements Parcelable {
 		 */
 		@NonNull
 		public ScanSettings build() {
-			return new ScanSettings(scanMode, callbackType,
-					reportDelayMillis, matchMode,
+			return new ScanSettings(scanMode, callbackType, reportDelayMillis, matchMode,
 					numOfMatchesPerFilter, legacy, phy, useHardwareFilteringIfSupported,
 					useHardwareBatchingIfSupported, useHardwareCallbackTypesIfSupported,
 					matchLostDeviceTimeout, matchLostTaskInterval,

@@ -241,7 +241,8 @@ import java.util.Map;
 						// are supported. We get an error here it they are not.
 						if (scanSettings.getUseHardwareCallbackTypesIfSupported()
 								&& scanSettings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
-							// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5
+							// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5 (SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES)
+                            // On Pixel 2 with Android 9.0 the errorCode = 4 (SCAN_FAILED_FEATURE_UNSUPPORTED)
 
 							// This feature seems to be not supported on your phone.
 							// Let's try to do pretty much the same in the code.
