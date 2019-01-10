@@ -194,6 +194,7 @@ public abstract class BluetoothLeScannerCompat {
 
 		@NonNull private final Object LOCK = new Object();
 
+		private final boolean mEmulateFiltering;
 		private final boolean mEmulateBatching;
 		private final boolean mEmulateFoundOrLostCallbackType;
 
@@ -247,7 +248,9 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		};
 
-		/* package */ ScanCallbackWrapper(@NonNull final List<ScanFilter> filters,
+		/* package */ ScanCallbackWrapper(final boolean offloadedBatchingSupported,
+										  final boolean offloadedFilteringSupported,
+										  @NonNull final List<ScanFilter> filters,
 										  @NonNull final ScanSettings settings,
 										  @NonNull final ScanCallback callback,
 										  @NonNull final Handler handler) {
@@ -257,12 +260,16 @@ public abstract class BluetoothLeScannerCompat {
 			mHandler = handler;
 
 			// Emulate other callback types
+			final boolean callbackTypesSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
 			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
-					&& !settings.getUseHardwareCallbackTypesIfSupported();
+					&& (!callbackTypesSupported || !settings.getUseHardwareCallbackTypesIfSupported());
+
+			// Emulate filtering
+			mEmulateFiltering = !filters.isEmpty() && (!offloadedFilteringSupported || !settings.getUseHardwareFilteringIfSupported());
 
 			// Emulate batching
-			final long delay = settings.getReportDelayMillis(); //What about getUseHardwareBatchingIfSupported() ?
-			mEmulateBatching = delay > 0;
+			final long delay = settings.getReportDelayMillis();
+			mEmulateBatching = delay > 0 && (!offloadedBatchingSupported || !settings.getUseHardwareBatchingIfSupported());
 			if (mEmulateBatching) {
 				mHandler.postDelayed(mFlushPendingScanResultsTask, delay);
 			}
@@ -295,11 +302,12 @@ public abstract class BluetoothLeScannerCompat {
 
 			// Notify if a new device was found and callback type is FIRST MATCH
 			if (mEmulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
-				// Save the fist result or update the old one with new data
-
 				ScanResult previousResult;
-
+				boolean firstResult;
 				synchronized (mDevicesInRange) {
+					// The periodic task will be started only on the first result
+					firstResult = mDevicesInRange.isEmpty();
+					// Save the first result or update the old one with new data
 					previousResult = mDevicesInRange.put(deviceAddress, scanResult);
 				}
 
@@ -310,9 +318,12 @@ public abstract class BluetoothLeScannerCompat {
 				}
 
 				// In case user wants to be notified about match lost, we need to start a task that
-				// will check periodically
-				if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0) {
-					mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
+				// will check the timestamp periodically
+				if (firstResult) {
+					if ((mScanSettings.getCallbackType() & ScanSettings.CALLBACK_TYPE_MATCH_LOST) > 0) {
+						mHandler.removeCallbacks(mMatchLostNotifierTask);
+						mHandler.postDelayed(mMatchLostNotifierTask, mScanSettings.getMatchLostTaskInterval());
+					}
 				}
 			} else {
 				// A callback type may not contain CALLBACK_TYPE_ALL_MATCHES and any other value.
@@ -332,11 +343,10 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
-		/* package */ void handleScanResults(@NonNull final List<ScanResult> results,
-											 final boolean offloadedFilteringSupported) {
+		/* package */ void handleScanResults(@NonNull final List<ScanResult> results) {
 			List<ScanResult> filteredResults = results;
 
-			if (!mFilters.isEmpty() && (!offloadedFilteringSupported || !mScanSettings.getUseHardwareFilteringIfSupported())) {
+			if (mEmulateFiltering) {
 				filteredResults = new ArrayList<>();
 				for (final ScanResult result : results)
 					if (matches(result))
@@ -346,16 +356,16 @@ public abstract class BluetoothLeScannerCompat {
 			mScanCallback.onBatchScanResults(filteredResults);
 		}
 
+		/* package */ void handleScanError(final int errorCode) {
+			mScanCallback.onScanFailed(errorCode);
+		}
+
 		private boolean matches(@NonNull final ScanResult result) {
 			for (final ScanFilter filter : mFilters) {
 				if (filter.matches(result))
 					return true;
 			}
 			return false;
-		}
-
-		/* package */ void onScanManagerErrorCallback(final int errorCode) {
-			mScanCallback.onScanFailed(errorCode);
 		}
 	}
 }

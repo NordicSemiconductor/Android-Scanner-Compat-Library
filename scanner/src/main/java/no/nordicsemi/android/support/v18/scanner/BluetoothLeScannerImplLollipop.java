@@ -58,6 +58,7 @@ import java.util.Map;
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
 
+		final boolean offloadedBatchingSupported = adapter.isOffloadedScanBatchingSupported();
 		final boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
 
 		ScanCallbackWrapperLollipop wrapper;
@@ -66,7 +67,8 @@ import java.util.Map;
 			if (mWrappers.containsKey(callback)) {
 				throw new IllegalArgumentException("scanner already started with given callback");
 			}
-			wrapper = new ScanCallbackWrapperLollipop(filters, settings, callback, handler, offloadedFilteringSupported);
+			wrapper = new ScanCallbackWrapperLollipop(offloadedBatchingSupported,
+					offloadedFilteringSupported, filters, settings, callback, handler);
 			mWrappers.put(callback, wrapper);
 		}
 
@@ -178,20 +180,21 @@ import java.util.Map;
 
 	private final class ScanCallbackWrapperLollipop extends ScanCallbackWrapper {
 
-		private final boolean mOffloadedFilteringSupported;
-		private long mLastBatchTimestamp;
 
-		private ScanCallbackWrapperLollipop(@NonNull final List<ScanFilter> filters,
+		private ScanCallbackWrapperLollipop(final boolean offloadedBatchingSupported,
+											final boolean offloadedFilteringSupported,
+											@NonNull final List<ScanFilter> filters,
 											@NonNull final ScanSettings settings,
 											@NonNull final ScanCallback callback,
-											@NonNull final Handler handler,
-											final boolean offloadedFilteringSupported) {
-			super(filters, settings, callback, handler);
-			mOffloadedFilteringSupported = offloadedFilteringSupported;
+											@NonNull final Handler handler) {
+			super(offloadedBatchingSupported, offloadedFilteringSupported,
+					filters, settings, callback, handler);
 		}
 
 		@NonNull
 		private final android.bluetooth.le.ScanCallback mNativeCallback = new android.bluetooth.le.ScanCallback() {
+			private long mLastBatchTimestamp;
+
 			@Override
 			public void onScanResult(final int callbackType, final android.bluetooth.le.ScanResult nativeScanResult) {
 				mHandler.post(new Runnable() {
@@ -222,7 +225,7 @@ import java.util.Map;
 							results.add(result);
 						}
 
-						handleScanResults(results, mOffloadedFilteringSupported);
+						handleScanResults(results);
 					}
 				});
 			}
@@ -249,7 +252,7 @@ import java.util.Map;
 						}
 
 						// else, notify user application
-						onScanManagerErrorCallback(errorCode);
+						handleScanError(errorCode);
 					}
 				});
 			}

@@ -92,7 +92,9 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 			if (mWrappers.containsKey(callback)) {
 				throw new IllegalArgumentException("scanner already started with given callback");
 			}
-			final ScanCallbackWrapper wrapper = new ScanCallbackWrapper(filters, settings, callback, handler);
+			final ScanCallbackWrapper wrapper = new ScanCallbackWrapper(
+					false, false,
+					filters, settings, callback, handler);
 			shouldStart = mWrappers.isEmpty();
 			mWrappers.put(callback, wrapper);
 		}
