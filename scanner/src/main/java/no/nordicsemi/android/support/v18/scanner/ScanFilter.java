@@ -332,7 +332,7 @@ public final class ScanFilter implements Parcelable {
 	 * Check if the uuid pattern is contained in a list of parcel uuids.
 	 */
 	private static boolean matchesServiceUuids(@Nullable ParcelUuid uuid,
-                                               @Nullable ParcelUuid parcelUuidMask,
+											   @Nullable ParcelUuid parcelUuidMask,
 											   @Nullable List<ParcelUuid> uuids) {
 		if (uuid == null) {
 			return true;
@@ -366,8 +366,8 @@ public final class ScanFilter implements Parcelable {
 	// Check whether the data pattern matches the parsed data.
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	private boolean matchesPartialData(@Nullable byte[] data,
-                                       @Nullable byte[] dataMask,
-                                       @Nullable byte[] parsedData) {
+									   @Nullable byte[] dataMask,
+									   @Nullable byte[] parsedData) {
 		if (data == null) {
 			// If filter data is null it means it doesn't matter.
 			// We return true if any data matching the manufacturerId were found.
@@ -439,8 +439,8 @@ public final class ScanFilter implements Parcelable {
 	/**
 	 * Checks if the scan filter is empty.
 	 */
-    @SuppressWarnings("unused")
-    /* package */ boolean isAllFieldsEmpty() {
+	@SuppressWarnings("unused")
+	/* package */ boolean isAllFieldsEmpty() {
 		return EMPTY.equals(this);
 	}
 
@@ -480,8 +480,8 @@ public final class ScanFilter implements Parcelable {
 		 * @throws IllegalArgumentException If the {@code deviceAddress} is invalid.
 		 */
 		public Builder setDeviceAddress(@NonNull String deviceAddress) {
-            //noinspection ConstantConditions
-            if (deviceAddress != null && !BluetoothAdapter.checkBluetoothAddress(deviceAddress)) {
+			//noinspection ConstantConditions
+			if (deviceAddress != null && !BluetoothAdapter.checkBluetoothAddress(deviceAddress)) {
 				throw new IllegalArgumentException("invalid device address " + deviceAddress);
 			}
 			mDeviceAddress = deviceAddress;
@@ -506,8 +506,8 @@ public final class ScanFilter implements Parcelable {
 		 *             {@code uuidMask} is not {@code null}.
 		 */
 		public Builder setServiceUuid(@NonNull ParcelUuid serviceUuid, @Nullable ParcelUuid uuidMask) {
-            //noinspection ConstantConditions
-            if (uuidMask != null && serviceUuid == null) {
+			//noinspection ConstantConditions
+			if (uuidMask != null && serviceUuid == null) {
 				throw new IllegalArgumentException("uuid is null while uuidMask is not null!");
 			}
 			mServiceUuid = serviceUuid;
@@ -521,8 +521,8 @@ public final class ScanFilter implements Parcelable {
 		 * @throws IllegalArgumentException If {@code serviceDataUuid} is null.
 		 */
 		public Builder setServiceData(@NonNull ParcelUuid serviceDataUuid, @NonNull byte[] serviceData) {
-            //noinspection ConstantConditions
-            if (serviceDataUuid == null) {
+			//noinspection ConstantConditions
+			if (serviceDataUuid == null) {
 				throw new IllegalArgumentException("serviceDataUuid is null");
 			}
 			mServiceDataUuid = serviceDataUuid;
@@ -543,8 +543,8 @@ public final class ScanFilter implements Parcelable {
 		 */
 		public Builder setServiceData(@NonNull ParcelUuid serviceDataUuid,
 									  @NonNull byte[] serviceData, @NonNull byte[] serviceDataMask) {
-            //noinspection ConstantConditions
-            if (serviceDataUuid == null) {
+			//noinspection ConstantConditions
+			if (serviceDataUuid == null) {
 				throw new IllegalArgumentException("serviceDataUuid is null");
 			}
 			if (mServiceDataMask != null) {
@@ -573,8 +573,8 @@ public final class ScanFilter implements Parcelable {
 		 * @throws IllegalArgumentException If the {@code manufacturerId} is invalid.
 		 */
 		public Builder setManufacturerData(int manufacturerId, @NonNull byte[] manufacturerData) {
-            //noinspection ConstantConditions
-            if (manufacturerData != null && manufacturerId < 0) {
+			//noinspection ConstantConditions
+			if (manufacturerData != null && manufacturerId < 0) {
 				throw new IllegalArgumentException("invalid manufacture id");
 			}
 			mManufacturerId = manufacturerId;
@@ -596,8 +596,8 @@ public final class ScanFilter implements Parcelable {
 		 */
 		public Builder setManufacturerData(int manufacturerId, @NonNull byte[] manufacturerData,
 										   @Nullable byte[] manufacturerDataMask) {
-            //noinspection ConstantConditions
-            if (manufacturerData != null && manufacturerId < 0) {
+			//noinspection ConstantConditions
+			if (manufacturerData != null && manufacturerId < 0) {
 				throw new IllegalArgumentException("invalid manufacture id");
 			}
 			if (mManufacturerDataMask != null) {

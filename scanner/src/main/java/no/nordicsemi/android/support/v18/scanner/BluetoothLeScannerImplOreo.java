@@ -31,7 +31,7 @@ import android.support.annotation.NonNull;
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
 
 	@NonNull
-    @Override
+	@Override
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
 																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
@@ -52,7 +52,7 @@ import android.support.annotation.NonNull;
 	}
 
 	@NonNull
-    @Override
+	@Override
 	/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult _result) {
 		// Calculate the important bits of Event Type
 		final int eventType = (_result.getDataStatus() << 5)
