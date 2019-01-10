@@ -35,7 +35,7 @@ import android.support.annotation.NonNull;
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
 																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
-				new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
+				new android.bluetooth.le.ScanSettings.Builder();
 
 		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
@@ -45,26 +45,27 @@ import android.support.annotation.NonNull;
 					.setMatchMode(settings.getMatchMode())
 					.setNumOfMatches(settings.getNumOfMatches());
 
-		builder.setLegacy(settings.getLegacy());
-		builder.setPhy(settings.getPhy());
+		builder.setScanMode(settings.getScanMode())
+				.setLegacy(settings.getLegacy())
+				.setPhy(settings.getPhy());
 
 		return builder.build();
 	}
 
 	@NonNull
 	@Override
-	/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult _result) {
+	/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult result) {
 		// Calculate the important bits of Event Type
-		final int eventType = (_result.getDataStatus() << 5)
-				| (_result.isLegacy() ? ScanResult.ET_LEGACY_MASK : 0)
-				| (_result.isConnectable() ? ScanResult.ET_CONNECTABLE_MASK : 0);
+		final int eventType = (result.getDataStatus() << 5)
+				| (result.isLegacy() ? ScanResult.ET_LEGACY_MASK : 0)
+				| (result.isConnectable() ? ScanResult.ET_CONNECTABLE_MASK : 0);
 		// Get data as bytes
-		final byte[] data = _result.getScanRecord() != null ? _result.getScanRecord().getBytes() : null;
+		final byte[] data = result.getScanRecord() != null ? result.getScanRecord().getBytes() : null;
 		// And return the v18.ScanResult
-		return new ScanResult(_result.getDevice(), eventType, _result.getPrimaryPhy(),
-				_result.getSecondaryPhy(), _result.getAdvertisingSid(),
-				_result.getTxPower(), _result.getRssi(),
-				_result.getPeriodicAdvertisingInterval(),
-				ScanRecord.parseFromBytes(data), _result.getTimestampNanos());
+		return new ScanResult(result.getDevice(), eventType, result.getPrimaryPhy(),
+				result.getSecondaryPhy(), result.getAdvertisingSid(),
+				result.getTxPower(), result.getRssi(),
+				result.getPeriodicAdvertisingInterval(),
+				ScanRecord.parseFromBytes(data), result.getTimestampNanos());
 	}
 }

@@ -94,7 +94,8 @@ public abstract class BluetoothLeScannerCompat {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(Collections.<ScanFilter>emptyList(), new ScanSettings.Builder().build(), callback, handler);
+		startScanInternal(Collections.<ScanFilter>emptyList(), new ScanSettings.Builder().build(),
+				callback, handler);
 	}
 
 	/**
@@ -120,7 +121,8 @@ public abstract class BluetoothLeScannerCompat {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(), settings != null ? settings : new ScanSettings.Builder().build(),
+		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+				settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler);
 	}
 
@@ -148,7 +150,8 @@ public abstract class BluetoothLeScannerCompat {
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
-		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(), settings != null ? settings : new ScanSettings.Builder().build(),
+		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+				settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler != null ? handler : new Handler(Looper.getMainLooper()));
 	}
 
@@ -178,7 +181,7 @@ public abstract class BluetoothLeScannerCompat {
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth
-	 * LE scan results batched on bluetooth controller. Returns immediately, batch scan results data
+	 * LE scan results batched on Bluetooth controller. Returns immediately, batch scan results data
 	 * will be delivered through the {@code callback}.
 	 *
 	 * @param callback Callback of the Bluetooth LE Scan, it has to be the same instance as the one
@@ -189,7 +192,7 @@ public abstract class BluetoothLeScannerCompat {
 
 	/* package */ static class ScanCallbackWrapper {
 
-		@NonNull private final Object mLOCK = new Object();
+		@NonNull private final Object LOCK = new Object();
 
 		private final boolean mEmulateBatching;
 		private final boolean mEmulateFoundOrLostCallbackType;
@@ -222,8 +225,8 @@ public abstract class BluetoothLeScannerCompat {
 			public void run() {
 				final long now = SystemClock.elapsedRealtimeNanos();
 
-				synchronized (mLOCK) {
-					Iterator<ScanResult> iterator = mDevicesInRange.values().iterator();
+				synchronized (LOCK) {
+					final Iterator<ScanResult> iterator = mDevicesInRange.values().iterator();
 					while (iterator.hasNext()) {
 						final ScanResult result = iterator.next();
 						if (result.getTimestampNanos() < now - mScanSettings.getMatchLostDeviceTimeout()) {
@@ -254,7 +257,8 @@ public abstract class BluetoothLeScannerCompat {
 			mHandler = handler;
 
 			// Emulate other callback types
-			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES && !settings.getUseHardwareCallbackTypesIfSupported();
+			mEmulateFoundOrLostCallbackType = settings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
+					&& !settings.getUseHardwareCallbackTypesIfSupported();
 
 			// Emulate batching
 			final long delay = settings.getReportDelayMillis(); //What about getUseHardwareBatchingIfSupported() ?
@@ -266,7 +270,7 @@ public abstract class BluetoothLeScannerCompat {
 
 		/* package */ void close() {
 			mHandler.removeCallbacksAndMessages(null);
-			synchronized (mLOCK) {
+			synchronized (LOCK) {
 				mDevicesInRange.clear();
 				mDevicesInBatch.clear();
 				mScanResults.clear();
@@ -275,7 +279,7 @@ public abstract class BluetoothLeScannerCompat {
 
 		/* package */ void flushPendingScanResults() {
 			if (mEmulateBatching) {
-				synchronized (mLOCK) {
+				synchronized (LOCK) {
 					mScanCallback.onBatchScanResults(new ArrayList<>(mScanResults));
 					mScanResults.clear();
 					mDevicesInBatch.clear();
@@ -291,7 +295,7 @@ public abstract class BluetoothLeScannerCompat {
 
 			// Notify if a new device was found and callback type is FIRST MATCH
 			if (mEmulateFoundOrLostCallbackType) { // -> Callback type != ScanSettings.CALLBACK_TYPE_ALL_MATCHES
-				// Save the fist result or update tle old one with new data
+				// Save the fist result or update the old one with new data
 
 				ScanResult previousResult;
 
@@ -315,7 +319,7 @@ public abstract class BluetoothLeScannerCompat {
 				// If mDevicesInRange is empty, report delay > 0 means we are emulating hardware
 				// batching. Otherwise handleScanResults(List) is called, not this method.
 				if (mEmulateBatching) {
-					synchronized (mLOCK) {
+					synchronized (LOCK) {
 						if (!mDevicesInBatch.contains(deviceAddress)) {  // add only the first record from the device, others will be skipped
 							mScanResults.add(scanResult);
 							mDevicesInBatch.add(deviceAddress);

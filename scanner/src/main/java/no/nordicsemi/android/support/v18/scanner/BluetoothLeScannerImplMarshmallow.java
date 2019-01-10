@@ -35,7 +35,7 @@ import android.support.annotation.NonNull;
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
 																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
-				new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
+				new android.bluetooth.le.ScanSettings.Builder();
 
 		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
@@ -44,6 +44,8 @@ import android.support.annotation.NonNull;
 			builder.setCallbackType(settings.getCallbackType())
 					.setMatchMode(settings.getMatchMode())
 					.setNumOfMatches(settings.getNumOfMatches());
+
+		builder.setScanMode(settings.getScanMode());
 
 		return builder.build();
 	}

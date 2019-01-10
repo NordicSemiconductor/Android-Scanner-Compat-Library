@@ -97,15 +97,15 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 			mWrappers.put(callback, wrapper);
 		}
 
+		if (mHandlerThread == null) {
+			mHandlerThread = new HandlerThread(BluetoothLeScannerImplJB.class.getName());
+			mHandlerThread.start();
+			mHandler = new Handler(mHandlerThread.getLooper());
+		}
+
 		setPowerSaveSettings();
 
 		if (shouldStart) {
-			if (mHandlerThread == null) {
-				mHandlerThread = new HandlerThread(BluetoothLeScannerImplJB.class.getName());
-				mHandlerThread.start();
-				mHandler = new Handler(mHandlerThread.getLooper());
-			}
-
 			adapter.startLeScan(mCallback);
 		}
 	}
@@ -142,6 +142,11 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	@SuppressWarnings("deprecation")
 	public void stopScan(@NonNull final ScanCallback callback) {
+		//noinspection ConstantConditions
+		if (callback == null) {
+			throw new IllegalArgumentException("callback cannot be null!");
+		}
+
 		boolean shouldStop;
 		ScanCallbackWrapper wrapper;
 		synchronized (mWrappers) {
@@ -177,25 +182,30 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 	@Override
 	@RequiresPermission(Manifest.permission.BLUETOOTH)
 	public void flushPendingScanResults(@NonNull final ScanCallback callback) {
-		BluetoothLeUtils.checkAdapterStateOn(BluetoothAdapter.getDefaultAdapter());
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback cannot be null!");
 		}
+
 		ScanCallbackWrapper wrapper;
 		synchronized (mWrappers) {
 			wrapper = mWrappers.get(callback);
 		}
 
-		if (wrapper != null) {
-			wrapper.flushPendingScanResults();
+		if (wrapper == null) {
+			throw new IllegalArgumentException("callback not registered!");
 		}
+
+		wrapper.flushPendingScanResults();
 	}
 
 	private final BluetoothAdapter.LeScanCallback mCallback = new BluetoothAdapter.LeScanCallback() {
 		@Override
 		public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-			final ScanResult scanResult = new ScanResult(device, ScanRecord.parseFromBytes(scanRecord), rssi, SystemClock.elapsedRealtimeNanos());
+			final ScanResult scanResult = new ScanResult(device, ScanRecord.parseFromBytes(scanRecord),
+					rssi, SystemClock.elapsedRealtimeNanos());
 
 			synchronized (mWrappers) {
 				final Collection<ScanCallbackWrapper> wrappers = mWrappers.values();

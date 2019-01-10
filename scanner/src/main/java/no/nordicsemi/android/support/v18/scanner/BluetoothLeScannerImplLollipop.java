@@ -58,7 +58,7 @@ import java.util.Map;
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
 
-		boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
+		final boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
 
 		ScanCallbackWrapperLollipop wrapper;
 
@@ -72,7 +72,7 @@ import java.util.Map;
 
 		final android.bluetooth.le.ScanSettings nativeScanSettings = toNativeScanSettings(adapter, settings);
 		List<android.bluetooth.le.ScanFilter> nativeScanFilters = null;
-		if (!filters.isEmpty() && adapter.isOffloadedFilteringSupported() && settings.getUseHardwareFilteringIfSupported())
+		if (!filters.isEmpty() && offloadedFilteringSupported && settings.getUseHardwareFilteringIfSupported())
 			nativeScanFilters = toNativeScanFilters(filters);
 
 		scanner.startScan(nativeScanFilters, nativeScanSettings, wrapper.mNativeCallback);
@@ -81,6 +81,11 @@ import java.util.Map;
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public void stopScan(@NonNull final ScanCallback callback) {
+		//noinspection ConstantConditions
+		if (callback == null) {
+			throw new IllegalArgumentException("callback cannot be null!");
+		}
+
 		ScanCallbackWrapperLollipop wrapper;
 		synchronized (mWrappers) {
 			wrapper = mWrappers.get(callback);
@@ -134,11 +139,15 @@ import java.util.Map;
 	}
 
 	@NonNull
-	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter, @NonNull final ScanSettings settings) {
-		final android.bluetooth.le.ScanSettings.Builder builder = new android.bluetooth.le.ScanSettings.Builder().setScanMode(settings.getScanMode());
+	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
+																		 @NonNull final ScanSettings settings) {
+		final android.bluetooth.le.ScanSettings.Builder builder =
+				new android.bluetooth.le.ScanSettings.Builder();
 
 		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
+
+		builder.setScanMode(settings.getScanMode());
 
 		settings.disableUseHardwareCallbackTypes(); // callback types other then CALLBACK_TYPE_ALL_MATCHES are not supported on Lollipop
 
@@ -172,9 +181,13 @@ import java.util.Map;
 		private final boolean mOffloadedFilteringSupported;
 		private long mLastBatchTimestamp;
 
-		private ScanCallbackWrapperLollipop(@NonNull final List<ScanFilter> filters, @NonNull final ScanSettings settings, @NonNull final ScanCallback callback, @NonNull final Handler handler, final boolean offloadedFilteringSupported) {
+		private ScanCallbackWrapperLollipop(@NonNull final List<ScanFilter> filters,
+											@NonNull final ScanSettings settings,
+											@NonNull final ScanCallback callback,
+											@NonNull final Handler handler,
+											final boolean offloadedFilteringSupported) {
 			super(filters, settings, callback, handler);
-			this.mOffloadedFilteringSupported = offloadedFilteringSupported;
+			mOffloadedFilteringSupported = offloadedFilteringSupported;
 		}
 
 		@NonNull
@@ -244,8 +257,10 @@ import java.util.Map;
 	}
 
 	@NonNull
-		/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult nativeScanResult) {
-		final byte[] data = nativeScanResult.getScanRecord() != null ? nativeScanResult.getScanRecord().getBytes() : null;
-		return new ScanResult(nativeScanResult.getDevice(), ScanRecord.parseFromBytes(data), nativeScanResult.getRssi(), nativeScanResult.getTimestampNanos());
+	/* package */ ScanResult fromNativeScanResult(@NonNull final android.bluetooth.le.ScanResult nativeScanResult) {
+		final byte[] data = nativeScanResult.getScanRecord() != null ?
+				nativeScanResult.getScanRecord().getBytes() : null;
+		return new ScanResult(nativeScanResult.getDevice(), ScanRecord.parseFromBytes(data),
+				nativeScanResult.getRssi(), nativeScanResult.getTimestampNanos());
 	}
 }
