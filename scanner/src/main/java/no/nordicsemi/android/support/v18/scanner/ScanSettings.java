@@ -122,20 +122,6 @@ public final class ScanSettings implements Parcelable {
 	public static final int MATCH_MODE_STICKY = 2;
 
 	/**
-	 * Request full scan results which contain the device, rssi, advertising data, scan response
-	 * as well as the scan timestamp.
-	 */
-	private static final int SCAN_RESULT_TYPE_FULL = 0;
-
-	/**
-	 * Request abbreviated scan results which contain the device, rssi and scan timestamp.
-	 * <p>
-	 * <b>Note:</b> It is possible for an application to get more scan results than it asked for, if
-	 * there are multiple apps using this type.
-	 */
-	private static final int SCAN_RESULT_TYPE_ABBREVIATED = 1;
-
-	/**
 	 * Use all supported PHYs for scanning.
 	 * This will check the controller capabilities, and start
 	 * the scan on 1Mbit and LE Coded PHYs if supported, or on
@@ -156,9 +142,6 @@ public final class ScanSettings implements Parcelable {
 
 	// Bluetooth LE scan callback type
 	private int callbackType;
-
-	// Bluetooth LE scan result type
-	private int scanResultType;
 
 	// Time of delay for reporting the scan result
 	private long reportDelayMillis;
@@ -188,10 +171,6 @@ public final class ScanSettings implements Parcelable {
 
 	public int getCallbackType() {
 		return callbackType;
-	}
-
-	public int getScanResultType() {
-		return scanResultType;
 	}
 
 	public int getMatchMode() {
@@ -255,7 +234,7 @@ public final class ScanSettings implements Parcelable {
 		return reportDelayMillis;
 	}
 
-	private ScanSettings(final int scanMode, final int callbackType, final int scanResultType,
+	private ScanSettings(final int scanMode, final int callbackType,
 						 final long reportDelayMillis, final int matchMode,
 						 final int numOfMatchesPerFilter, final boolean legacy, final int phy,
 						 final boolean hardwareFiltering, final boolean hardwareBatching,
@@ -264,7 +243,6 @@ public final class ScanSettings implements Parcelable {
 						 final long powerSaveScanInterval, final long powerSaveRestInterval) {
 		this.scanMode = scanMode;
 		this.callbackType = callbackType;
-		this.scanResultType = scanResultType;
 		this.reportDelayMillis = reportDelayMillis;
 		this.numOfMatchesPerFilter = numOfMatchesPerFilter;
 		this.matchMode = matchMode;
@@ -282,7 +260,6 @@ public final class ScanSettings implements Parcelable {
 	private ScanSettings(final Parcel in) {
 		scanMode = in.readInt();
 		callbackType = in.readInt();
-		scanResultType = in.readInt();
 		reportDelayMillis = in.readLong();
 		matchMode = in.readInt();
 		numOfMatchesPerFilter = in.readInt();
@@ -298,7 +275,6 @@ public final class ScanSettings implements Parcelable {
 	public void writeToParcel(final Parcel dest, final int flags) {
 		dest.writeInt(scanMode);
 		dest.writeInt(callbackType);
-		dest.writeInt(scanResultType);
 		dest.writeLong(reportDelayMillis);
 		dest.writeInt(matchMode);
 		dest.writeInt(numOfMatchesPerFilter);
@@ -349,7 +325,6 @@ public final class ScanSettings implements Parcelable {
 	public static final class Builder {
 		private int scanMode = SCAN_MODE_LOW_POWER;
 		private int callbackType = CALLBACK_TYPE_ALL_MATCHES;
-		private int scanResultType = SCAN_RESULT_TYPE_FULL;
 		private long reportDelayMillis = 0;
 		private int matchMode = MATCH_MODE_AGGRESSIVE;
 		private int numOfMatchesPerFilter = MATCH_NUM_MAX_ADVERTISEMENT;
@@ -403,25 +378,6 @@ public final class ScanSettings implements Parcelable {
 				return true;
 			}
 			return callbackType == (CALLBACK_TYPE_FIRST_MATCH | CALLBACK_TYPE_MATCH_LOST);
-		}
-
-		/**
-		 * Set scan result type for Bluetooth LE scan.
-		 *
-		 * @param scanResultType Type for scan result, could be either
-		 *            {@link ScanSettings#SCAN_RESULT_TYPE_FULL} or
-		 *            {@link ScanSettings#SCAN_RESULT_TYPE_ABBREVIATED}.
-		 * @throws IllegalArgumentException If the {@code scanResultType} is invalid.
-		 */
-		@NonNull
-		public Builder setScanResultType(final int scanResultType) {
-			if (scanResultType < SCAN_RESULT_TYPE_FULL
-					|| scanResultType > SCAN_RESULT_TYPE_ABBREVIATED) {
-				throw new IllegalArgumentException(
-						"invalid scanResultType - " + scanResultType);
-			}
-			this.scanResultType = scanResultType;
-			return this;
 		}
 
 		/**
@@ -613,7 +569,7 @@ public final class ScanSettings implements Parcelable {
 		 */
 		@NonNull
 		public ScanSettings build() {
-			return new ScanSettings(scanMode, callbackType, scanResultType,
+			return new ScanSettings(scanMode, callbackType,
 					reportDelayMillis, matchMode,
 					numOfMatchesPerFilter, legacy, phy, useHardwareFilteringIfSupported,
 					useHardwareBatchingIfSupported, useHardwareCallbackTypesIfSupported,
