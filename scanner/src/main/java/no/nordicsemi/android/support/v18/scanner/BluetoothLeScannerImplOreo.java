@@ -82,10 +82,10 @@ import java.util.List;
 			throw new IllegalStateException("BT le scanner not available");
 
 		final ScanSettings nonNullSettings = settings != null ? settings : new ScanSettings.Builder().build();
-		final android.bluetooth.le.ScanSettings nativeSettings = toImpl(ba, nonNullSettings);
+		final android.bluetooth.le.ScanSettings nativeSettings = toNativeScanSettings(ba, nonNullSettings);
 		List<android.bluetooth.le.ScanFilter> nativeFilters = null;
 		if (filters != null && ba.isOffloadedFilteringSupported() && nonNullSettings.getUseHardwareFilteringIfSupported())
-            nativeFilters = toImpl(filters);
+            nativeFilters = toNativeScanFilters(filters);
 
 		scanner.startScan(nativeFilters, nativeSettings, callbackIntent);
 	}
