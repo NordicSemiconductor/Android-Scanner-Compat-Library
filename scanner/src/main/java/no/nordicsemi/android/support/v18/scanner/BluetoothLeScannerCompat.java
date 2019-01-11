@@ -55,6 +55,7 @@ import java.util.Set;
  *
  * @see ScanFilter
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class BluetoothLeScannerCompat {
 
     /**
