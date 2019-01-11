@@ -15,7 +15,7 @@ apply plugin: 'com.jfrog.bintray'
 ext {
     PUBLISH_GROUP_ID = 'no.nordicsemi.android.support.v18'
     PUBLISH_ARTIFACT_ID = 'scanner'
-    PUBLISH_VERSION = '1.1.0'
+    PUBLISH_VERSION = '1.2.0'
 
     bintrayRepo = 'android'
     bintrayName = 'no.nordicsemi.android.support.v18:scanner'
@@ -45,8 +45,8 @@ android {
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 28
-        versionCode 5
-        versionName "1.1.0"
+        versionCode 6
+        versionName "1.2.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
