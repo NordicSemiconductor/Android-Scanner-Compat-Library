@@ -14,7 +14,7 @@ that means only legacy advertising packets on PHY LE 1M will be reported, due to
 The compat library may be found on jcenter repository. Add it to your project by adding the following dependency:
 
 ```Groovy
-compile 'no.nordicsemi.android.support.v18:scanner:1.2.0'
+compile 'no.nordicsemi.android.support.v18:scanner:1.3.0'
 ```
 
 ## API
@@ -54,6 +54,22 @@ to stop scanning use:
 	BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
 	scanner.stopScan(scanCallback);
 ```
+
+### Scanning with Pending Intent
+
+Android 8.0 Oreo introduced [Background Execution Limits](https://developer.android.com/about/versions/oreo/background).
+At the same time, to make background scanning possible, a new 
+[method](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner.html#startScan(java.util.List%3Candroid.bluetooth.le.ScanFilter%3E,%20android.bluetooth.le.ScanSettings,%20android.app.PendingIntent))
+was added to [BluetoothLeScanner](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner.html)
+which allows registering a [PendingIntent](https://developer.android.com/reference/android/app/PendingIntent).
+This allows to send a Broadcast whenever a device is found.
+
+Starting from version 1.3.0, this library may emulate such feature on older Android versions.
+In order to do that, a background service will be started after calling `scanner.startScan(filters, settings, context, pendingIntent)`,
+which will start scanning in background with given settings and will send an Intent if a device 
+matching filter is found. To lower battery consumption it is recommended to set `ScanSettings.SCAN_MODE_LOW_POWER`
+scanning mode and use filter. To stop scanning call `scanner.stopScan(context, pendingIntent)` with 
+the same intent in parameter. The service will be stopped when a last scan was stopped.
 
 ## License
 
