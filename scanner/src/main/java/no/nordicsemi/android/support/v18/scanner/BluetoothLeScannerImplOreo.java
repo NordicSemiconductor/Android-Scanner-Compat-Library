@@ -28,96 +28,88 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @TargetApi(Build.VERSION_CODES.O)
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
 
-	/**
-	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
-	 * via the PendingIntent. Use this method of scanning if your process is not always running
-	 * and it should be started when scan results are available.
-	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
-	 * in order to get results.
-	 * <p>
-	 * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
-	 * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
-	 * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
-	 * <p>
-	 * Scanning using {@link PendingIntent} on Android Oreo or newer may ignore some settings.
-	 * For example, {@link ScanSettings.Builder#setUseHardwareBatchingIfSupported(boolean)},
-	 * {@link ScanSettings.Builder#setUseHardwareCallbackTypesIfSupported(boolean)} and
-	 * {@link ScanSettings.Builder#setUseHardwareFilteringIfSupported(boolean)} will all be set to
-	 * true.
-	 *
-	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
-	 * @param settings       Optional settings for the scan.
-	 * @param context        Unused. Used only before Android Oreo.
-	 * @param callbackIntent The PendingIntent to deliver the result to.
-	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
-	 */
+	@NonNull private final Map<PendingIntent, ScanCallbackWrapperOreo> wrappers = new HashMap<>();
+
+	@Nullable
+	/* package */ ScanCallbackWrapperOreo getWrapper(@NonNull final PendingIntent pendingIntent) {
+	    synchronized (wrappers) {
+            return wrappers.get(pendingIntent);
+        }
+	}
+
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(@Nullable final List<ScanFilter> filters,
-						  @Nullable final ScanSettings settings,
-						  @NonNull  final Context context,
-						  @NonNull  final PendingIntent callbackIntent) {
-		//noinspection ConstantConditions
-		if (callbackIntent == null) {
-			throw new IllegalArgumentException("callbackIntent is null");
-		}
-		final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(ba);
+	/* package */ void startScanInternal(@Nullable final List<ScanFilter> filters,
+										 @Nullable final ScanSettings settings,
+										 @NonNull  final Context context,
+										 @NonNull  final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
-		final BluetoothLeScanner scanner = ba.getBluetoothLeScanner();
+		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
 
+		final boolean offloadedBatchingSupported = adapter.isOffloadedScanBatchingSupported();
+		final boolean offloadedFilteringSupported = adapter.isOffloadedFilteringSupported();
+
 		final ScanSettings nonNullSettings = settings != null ? settings : new ScanSettings.Builder().build();
-		final android.bluetooth.le.ScanSettings nativeSettings = toNativeScanSettings(ba, nonNullSettings);
-		List<android.bluetooth.le.ScanFilter> nativeFilters = null;
-		if (filters != null && ba.isOffloadedFilteringSupported() && nonNullSettings.getUseHardwareFilteringIfSupported())
-            nativeFilters = toNativeScanFilters(filters);
+		final List<ScanFilter> nonNullFilters = filters != null ? filters : Collections.<ScanFilter>emptyList();
 
-		scanner.startScan(nativeFilters, nativeSettings, callbackIntent);
-	}
-
-	/**
-	 * Stops an ongoing Bluetooth LE scan.
-	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 *
-	 * @param context        Unused. Used only before Android Oreo.
-	 * @param callbackIntent The PendingIntent that was used to start the scan.
-	 */
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
-	public void stopScan(@NonNull final Context context,
-						 @NonNull final PendingIntent callbackIntent) {
-		//noinspection ConstantConditions
-		if (callbackIntent == null) {
-			throw new IllegalArgumentException("callbackIntent is null");
+		ScanCallbackWrapperOreo wrapper;
+		synchronized (wrappers) {
+			if (wrappers.containsKey(callbackIntent))
+				throw new IllegalArgumentException("scanner already started with given callback intent");
+			wrapper = new ScanCallbackWrapperOreo(offloadedBatchingSupported, offloadedFilteringSupported,
+					nonNullFilters, nonNullSettings, context, callbackIntent);
+			wrappers.put(callbackIntent, wrapper);
 		}
 
-		final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
-		if (ba == null)
-			return;
-		final BluetoothLeScanner scanner = ba.getBluetoothLeScanner();
-		if (scanner == null)
-			return;
-
-		scanner.stopScan(callbackIntent);
+		final android.bluetooth.le.ScanSettings nativeSettings = toNativeScanSettings(adapter, nonNullSettings);
+		List<android.bluetooth.le.ScanFilter> nativeFilters = null;
+		if (filters != null && adapter.isOffloadedFilteringSupported() && nonNullSettings.getUseHardwareFilteringIfSupported())
+			nativeFilters = toNativeScanFilters(filters);
+		scanner.startScan(nativeFilters, nativeSettings, wrapper.nativePendingIntent);
 	}
 
-    @NonNull
-    @Override
+	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
+	/* package */ void stopScanInternal(@NonNull final Context context,
+										@NonNull final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
+
+		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+		if (scanner == null)
+			throw new IllegalStateException("BT le scanner not available");
+
+		ScanCallbackWrapperOreo wrapper;
+		synchronized (wrappers) {
+			wrapper = wrappers.remove(callbackIntent);
+		}
+		if (wrapper == null)
+			return;
+
+		scanner.stopScan(wrapper.nativePendingIntent);
+	}
+
+	@NonNull
+	@Override
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
 																		 @NonNull final ScanSettings settings) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
@@ -153,5 +145,25 @@ import java.util.List;
 				result.getTxPower(), result.getRssi(),
 				result.getPeriodicAdvertisingInterval(),
 				ScanRecord.parseFromBytes(data), result.getTimestampNanos());
+	}
+
+	/* package */ static class ScanCallbackWrapperOreo extends ScanCallbackWrapper {
+		@NonNull final PendingIntent nativePendingIntent;
+		@NonNull final PendingIntentExecutor executor;
+
+		ScanCallbackWrapperOreo(final boolean offloadedBatchingSupported,
+								final boolean offloadedFilteringSupported,
+								@NonNull final List<ScanFilter> filters,
+								@NonNull final ScanSettings settings,
+								@NonNull final Context context,
+								@NonNull final PendingIntent callbackIntent) {
+			super(offloadedBatchingSupported, offloadedFilteringSupported, filters, settings,
+					new PendingIntentExecutor(callbackIntent), new Handler(Looper.getMainLooper()));
+			executor = (PendingIntentExecutor) scanCallback;
+
+			final Intent intent = new Intent(PendingIntentReceiver.ACTION);
+			intent.putExtra(PendingIntentReceiver.EXTRA_PENDING_INTENT, callbackIntent);
+			nativePendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+		}
 	}
 }

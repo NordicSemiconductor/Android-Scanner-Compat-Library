@@ -7,10 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +31,8 @@ import java.util.List;
  * {@link ScanSettings#SCAN_MODE_LOW_POWER} mode and set filter to lower power consumption.
  */
 public class ScannerService extends Service {
+    private static final String TAG = "ScannerService";
+
     /* package */ final static String EXTRA_PENDING_INTENT = "no.nordicsemi.android.support.v18.EXTRA_PENDING_INTENT";
     /* package */ final static String EXTRA_FILTERS = "no.nordicsemi.android.support.v18.EXTRA_FILTERS";
     /* package */ final static String EXTRA_SETTINGS = "no.nordicsemi.android.support.v18.EXTRA_SETTINGS";
@@ -102,7 +104,11 @@ public class ScannerService extends Service {
     public void onDestroy() {
         final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
         for (final ScanCallback callback : callbacks.values()) {
-            scannerCompat.stopScan(callback);
+            try {
+                scannerCompat.stopScan(callback);
+            } catch (final Exception e) {
+                // Ignore
+            }
         }
         callbacks.clear();
         callbacks = null;
@@ -114,13 +120,18 @@ public class ScannerService extends Service {
     private void startScan(@NonNull final List<ScanFilter> filters,
                            @NonNull final ScanSettings settings,
                            @NonNull final PendingIntent callbackIntent) {
-        final ScanCallback callback = new PendingIntentExecutor(callbackIntent);
+        final PendingIntentExecutor callback = new PendingIntentExecutor(callbackIntent);
+        callback.setContext(this);
         synchronized (LOCK) {
             callbacks.put(callbackIntent, callback);
         }
 
-        final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
-        scannerCompat.startScanInternal(filters, settings, callback, handler);
+        try {
+            final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
+            scannerCompat.startScanInternal(filters, settings, callback, handler);
+        } catch (final Exception e) {
+            Log.e(TAG, "Starting scanning failed", e);
+        }
     }
 
     @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
@@ -136,59 +147,15 @@ public class ScannerService extends Service {
             return;
         }
 
-        final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
-        scannerCompat.stopScan(callback);
+        try {
+            final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
+            scannerCompat.stopScan(callback);
+        } catch (final Exception e) {
+            Log.e(TAG, "Stopping scanning failed", e);
+        }
 
         if (shouldStop) {
             stopSelf();
-        }
-    }
-
-    private class PendingIntentExecutor extends ScanCallback {
-
-        @NonNull private final PendingIntent callbackIntent;
-
-        PendingIntentExecutor(@NonNull final PendingIntent callbackIntent) {
-            this.callbackIntent = callbackIntent;
-        }
-
-        @Override
-        public void onScanResult(final int callbackType, @NonNull final ScanResult result) {
-            try {
-                final Intent extrasIntent = new Intent();
-                extrasIntent.putExtra(BluetoothLeScannerCompat.EXTRA_CALLBACK_TYPE, callbackType);
-                final ArrayList<ScanResult> results = new ArrayList<>(1);
-                results.add(result);
-                extrasIntent.putParcelableArrayListExtra(BluetoothLeScannerCompat.EXTRA_LIST_SCAN_RESULT, results);
-                callbackIntent.send(ScannerService.this, 0, extrasIntent);
-            } catch (final PendingIntent.CanceledException e) {
-                // ignore
-            }
-        }
-
-        @Override
-        public void onBatchScanResults(@NonNull final List<ScanResult> results) {
-            try {
-                final Intent extrasIntent = new Intent();
-                extrasIntent.putExtra(BluetoothLeScannerCompat.EXTRA_CALLBACK_TYPE,
-                        ScanSettings.CALLBACK_TYPE_ALL_MATCHES);
-                extrasIntent.putParcelableArrayListExtra(BluetoothLeScannerCompat.EXTRA_LIST_SCAN_RESULT,
-                        new ArrayList<Parcelable>(results));
-                callbackIntent.send(ScannerService.this, 0, extrasIntent);
-            } catch (final PendingIntent.CanceledException e) {
-                // ignore
-            }
-        }
-
-        @Override
-        public void onScanFailed(final int errorCode) {
-            try {
-                final Intent extrasIntent = new Intent();
-                extrasIntent.putExtra(BluetoothLeScannerCompat.EXTRA_ERROR_CODE, errorCode);
-                callbackIntent.send(ScannerService.this, 0, extrasIntent);
-            } catch (final PendingIntent.CanceledException e) {
-                // ignore
-            }
         }
     }
 }
