@@ -49,6 +49,14 @@ import java.util.Set;
  * <p>
  * Use {@link BluetoothLeScannerCompat#getScanner()} to get an instance of the scanner.
  * <p>
+ * Since version 1.3.0 of the Scanner Compar Library library,
+ * {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
+ * whether the scanning with {@link PendingIntent} feature is used or not.
+ * The {@link ScannerService} is used to emulate such scanning on platforms
+ * before Oreo, while {@link PendingIntentReceiver} is used to translate from native
+ * {@link android.bluetooth.le.ScanResult} to compat {@link ScanResult} and apply additional
+ * filtering.
+ * <p>
  * <b>Note:</b> Most of the scan methods here require
  * {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
  *
@@ -212,7 +220,7 @@ public abstract class BluetoothLeScannerCompat {
 												  @NonNull Handler handler);
 
 	/**
-	 * Stops an ongoing Bluetooth LE scan.
+	 * Stops an ongoing Bluetooth LE scan. Its implementation depends on the Android version.
 	 *
 	 * @param callback The callback used to start scanning.
 	 */
@@ -223,6 +231,15 @@ public abstract class BluetoothLeScannerCompat {
 	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
 	 * via the PendingIntent. On platforms before Oreo this will start {@link ScannerService}
 	 * which will scan in background using given settings.
+	 * <p>
+	 * This method of scanning is intended to work in background. Long running scanning may
+	 * consume a lot of battery, so it is recommended to use low power mode in settings,
+	 * offloaded filtering and batching. However, the library may emulate batching, filtering or
+	 * callback types {@link ScanSettings#CALLBACK_TYPE_FIRST_MATCH} and
+	 * {@link ScanSettings#CALLBACK_TYPE_MATCH_LOST} if they are not supported.
+	 * <p>
+	 * A {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
+	 * whether this feature is used or not.
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 * An app must hold

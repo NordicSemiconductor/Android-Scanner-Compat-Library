@@ -48,6 +48,7 @@ import java.util.Map;
 	 * A map that stores {@link PendingIntentExecutorWrapper}s for user's {@link PendingIntent}.
 	 * Each wrapper keeps track of found and lost devices and allows to emulate batching.
 	 */
+	// The type is HashMap, not Map, as the Map does not allow to put null as values.
 	@NonNull private final HashMap<PendingIntent, PendingIntentExecutorWrapper> wrappers = new HashMap<>();
 
 	/**
@@ -164,13 +165,12 @@ import java.util.Map;
 		// that is when ScanSettings.Builder#use[...]IfSupported were called with false.
 		// Only native classes may be used here, as they are delivered to another application.
 		intent.putParcelableArrayListExtra(PendingIntentReceiver.EXTRA_FILTERS, toNativeScanFilters(filters));
+		intent.putExtra(PendingIntentReceiver.EXTRA_SETTINGS, toNativeScanSettings(adapter, settings, true));
 		intent.putExtra(PendingIntentReceiver.EXTRA_USE_HARDWARE_BATCHING, settings.getUseHardwareBatchingIfSupported());
 		intent.putExtra(PendingIntentReceiver.EXTRA_USE_HARDWARE_FILTERING, settings.getUseHardwareFilteringIfSupported());
 		intent.putExtra(PendingIntentReceiver.EXTRA_USE_HARDWARE_CALLBACK_TYPES, settings.getUseHardwareCallbackTypesIfSupported());
 		intent.putExtra(PendingIntentReceiver.EXTRA_MATCH_MODE, settings.getMatchMode());
 		intent.putExtra(PendingIntentReceiver.EXTRA_NUM_OF_MATCHES, settings.getNumOfMatches());
-		// To make it copy all fields, we need to modify the settings a bit before copying
-		intent.putExtra(PendingIntentReceiver.EXTRA_SETTINGS, toNativeScanSettings(adapter, settings, true));
 
 		return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
