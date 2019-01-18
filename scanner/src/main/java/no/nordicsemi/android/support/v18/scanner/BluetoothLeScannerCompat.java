@@ -197,6 +197,7 @@ public abstract class BluetoothLeScannerCompat {
 		private final boolean emulateFiltering;
 		private final boolean emulateBatching;
 		private final boolean emulateFoundOrLostCallbackType;
+		private boolean scanningStopped;
 
 		@NonNull final List<ScanFilter> filters;
 		@NonNull final ScanSettings scanSettings;
@@ -214,8 +215,10 @@ public abstract class BluetoothLeScannerCompat {
 		private final Runnable flushPendingScanResultsTask = new Runnable() {
 			@Override
 			public void run() {
-				flushPendingScanResults();
-				handler.postDelayed(this, scanSettings.getReportDelayMillis());
+				if (!scanningStopped) {
+					flushPendingScanResults();
+					handler.postDelayed(this, scanSettings.getReportDelayMillis());
+				}
 			}
 		};
 
@@ -258,6 +261,7 @@ public abstract class BluetoothLeScannerCompat {
             this.scanSettings = settings;
             this.scanCallback = callback;
 			this.handler = handler;
+			this.scanningStopped = false;
 
 			// Emulate other callback types
 			final boolean callbackTypesSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
@@ -276,6 +280,7 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void close() {
+			scanningStopped = true;
 			handler.removeCallbacksAndMessages(null);
 			synchronized (LOCK) {
 				devicesInRange.clear();
@@ -285,7 +290,7 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void flushPendingScanResults() {
-			if (emulateBatching) {
+			if (emulateBatching && !scanningStopped) {
 				synchronized (LOCK) {
 					scanCallback.onBatchScanResults(new ArrayList<>(scanResults));
 					scanResults.clear();
@@ -295,7 +300,7 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void handleScanResult(@NonNull final ScanResult scanResult) {
-			if (!filters.isEmpty() && !matches(scanResult))
+			if (scanningStopped || !filters.isEmpty() && !matches(scanResult))
 				return;
 
 			final String deviceAddress = scanResult.getDevice().getAddress();
@@ -344,6 +349,9 @@ public abstract class BluetoothLeScannerCompat {
 		}
 
 		/* package */ void handleScanResults(@NonNull final List<ScanResult> results) {
+			if (scanningStopped)
+				return;
+
 			List<ScanResult> filteredResults = results;
 
 			if (emulateFiltering) {
