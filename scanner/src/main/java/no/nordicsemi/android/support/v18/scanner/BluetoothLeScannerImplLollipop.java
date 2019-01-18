@@ -44,7 +44,7 @@ import java.util.Map;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 /* package */ class BluetoothLeScannerImplLollipop extends BluetoothLeScannerCompat {
 
-	private final Map<ScanCallback, ScanCallbackWrapperLollipop> wrappers = new HashMap<>();
+	@NonNull private final Map<ScanCallback, ScanCallbackWrapperLollipop> wrappers = new HashMap<>();
 
 	/* package */ BluetoothLeScannerImplLollipop() {}
 
@@ -75,7 +75,7 @@ import java.util.Map;
 			wrappers.put(callback, wrapper);
 		}
 
-		final android.bluetooth.le.ScanSettings nativeScanSettings = toNativeScanSettings(adapter, settings);
+		final android.bluetooth.le.ScanSettings nativeScanSettings = toNativeScanSettings(adapter, settings, false);
 		List<android.bluetooth.le.ScanFilter> nativeScanFilters = null;
 		if (!filters.isEmpty() && offloadedFilteringSupported && settings.getUseHardwareFilteringIfSupported())
 			nativeScanFilters = toNativeScanFilters(filters);
@@ -86,62 +86,62 @@ import java.util.Map;
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void stopScanInternal(@NonNull final ScanCallback callback) {
-        final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothLeUtils.checkAdapterStateOn(adapter);
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
-        final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
-        if (scanner == null)
-            throw new IllegalStateException("BT le scanner not available");
+		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+		if (scanner == null)
+			throw new IllegalStateException("BT le scanner not available");
 
 		ScanCallbackWrapperLollipop wrapper;
 		synchronized (wrappers) {
 			wrapper = wrappers.remove(callback);
 		}
-        if (wrapper == null)
-            return;
+		if (wrapper == null)
+			return;
 
 		wrapper.close();
 
 		scanner.stopScan(wrapper.nativeCallback);
 	}
 
-    @Override
-    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-        /* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
-                                             @NonNull final ScanSettings settings,
-                                             @NonNull final Context context,
-                                             @NonNull final PendingIntent callbackIntent) {
-        final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothLeUtils.checkAdapterStateOn(adapter);
+	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+		/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
+											 @NonNull final ScanSettings settings,
+											 @NonNull final Context context,
+											 @NonNull final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
-        final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
-        if (scanner == null)
-            throw new IllegalStateException("BT le scanner not available");
+		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+		if (scanner == null)
+			throw new IllegalStateException("BT le scanner not available");
 
-        final Intent service = new Intent(context, ScannerService.class);
-        service.putParcelableArrayListExtra(ScannerService.EXTRA_FILTERS, new ArrayList<>(filters));
-        service.putExtra(ScannerService.EXTRA_SETTINGS, settings);
-        service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
-        service.putExtra(ScannerService.EXTRA_START, true);
-        context.startService(service);
-    }
+		final Intent service = new Intent(context, ScannerService.class);
+		service.putParcelableArrayListExtra(ScannerService.EXTRA_FILTERS, new ArrayList<>(filters));
+		service.putExtra(ScannerService.EXTRA_SETTINGS, settings);
+		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_START, true);
+		context.startService(service);
+	}
 
-    @Override
-    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-        /* package */ void stopScanInternal(@NonNull final Context context,
-                                            @NonNull final PendingIntent callbackIntent) {
-        final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothLeUtils.checkAdapterStateOn(adapter);
+	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+		/* package */ void stopScanInternal(@NonNull final Context context,
+											@NonNull final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
-        final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
-        if (scanner == null)
-            throw new IllegalStateException("BT le scanner not available");
+		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+		if (scanner == null)
+			throw new IllegalStateException("BT le scanner not available");
 
-        final Intent service = new Intent(context, ScannerService.class);
-        service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
-        service.putExtra(ScannerService.EXTRA_START, false);
-        context.startService(service);
-    }
+		final Intent service = new Intent(context, ScannerService.class);
+		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_START, false);
+		context.startService(service);
+	}
 
 	@Override
 	@RequiresPermission(Manifest.permission.BLUETOOTH)
@@ -175,11 +175,12 @@ import java.util.Map;
 
 	@NonNull
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
-																		 @NonNull final ScanSettings settings) {
+																		 @NonNull final ScanSettings settings,
+																		 final boolean exactCopy) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
 				new android.bluetooth.le.ScanSettings.Builder();
 
-		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
+		if (exactCopy || adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
 
 		builder.setScanMode(settings.getScanMode());
@@ -190,8 +191,8 @@ import java.util.Map;
 	}
 
 	@NonNull
-	/* package */ List<android.bluetooth.le.ScanFilter> toNativeScanFilters(@NonNull final List<ScanFilter> filters) {
-		final List<android.bluetooth.le.ScanFilter> nativeScanFilters = new ArrayList<>();
+	/* package */ ArrayList<android.bluetooth.le.ScanFilter> toNativeScanFilters(@NonNull final List<ScanFilter> filters) {
+		final ArrayList<android.bluetooth.le.ScanFilter> nativeScanFilters = new ArrayList<>();
 		for (final ScanFilter filter : filters)
 			nativeScanFilters.add(toNativeScanFilter(filter));
 		return nativeScanFilters;
@@ -220,8 +221,8 @@ import java.util.Map;
 	}
 
 	@NonNull
-	/* package */ List<ScanResult> fromNativeScanResults(@NonNull final List<android.bluetooth.le.ScanResult> nativeScanResults) {
-		final List<ScanResult> results = new ArrayList<>();
+	/* package */ ArrayList<ScanResult> fromNativeScanResults(@NonNull final List<android.bluetooth.le.ScanResult> nativeScanResults) {
+		final ArrayList<ScanResult> results = new ArrayList<>();
 		for (final android.bluetooth.le.ScanResult nativeScanResult : nativeScanResults) {
 			final ScanResult result = fromNativeScanResult(nativeScanResult);
 			results.add(result);

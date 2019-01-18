@@ -33,10 +33,10 @@ import java.util.List;
 public class ScannerService extends Service {
     private static final String TAG = "ScannerService";
 
-    /* package */ final static String EXTRA_PENDING_INTENT = "no.nordicsemi.android.support.v18.EXTRA_PENDING_INTENT";
-    /* package */ final static String EXTRA_FILTERS = "no.nordicsemi.android.support.v18.EXTRA_FILTERS";
-    /* package */ final static String EXTRA_SETTINGS = "no.nordicsemi.android.support.v18.EXTRA_SETTINGS";
-    /* package */ final static String EXTRA_START = "no.nordicsemi.android.support.v18.EXTRA_START";
+    /* package */ static final String EXTRA_PENDING_INTENT = "no.nordicsemi.android.support.v18.EXTRA_PENDING_INTENT";
+    /* package */ static final String EXTRA_FILTERS = "no.nordicsemi.android.support.v18.EXTRA_FILTERS";
+    /* package */ static final String EXTRA_SETTINGS = "no.nordicsemi.android.support.v18.EXTRA_SETTINGS";
+    /* package */ static final String EXTRA_START = "no.nordicsemi.android.support.v18.EXTRA_START";
 
     @NonNull private final Object LOCK = new Object();
 
@@ -62,9 +62,8 @@ public class ScannerService extends Service {
             synchronized (LOCK) {
                 shouldStop = callbacks.isEmpty();
             }
-            if (shouldStop) {
+            if (shouldStop)
                 stopSelf();
-            }
             return START_NOT_STICKY;
         }
 
@@ -120,15 +119,15 @@ public class ScannerService extends Service {
     private void startScan(@NonNull final List<ScanFilter> filters,
                            @NonNull final ScanSettings settings,
                            @NonNull final PendingIntent callbackIntent) {
-        final PendingIntentExecutor callback = new PendingIntentExecutor(callbackIntent);
-        callback.setContext(this);
+        final PendingIntentExecutor executor =
+                new PendingIntentExecutor(callbackIntent, settings, this);
         synchronized (LOCK) {
-            callbacks.put(callbackIntent, callback);
+            callbacks.put(callbackIntent, executor);
         }
 
         try {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
-            scannerCompat.startScanInternal(filters, settings, callback, handler);
+            scannerCompat.startScanInternal(filters, settings, executor, handler);
         } catch (final Exception e) {
             Log.e(TAG, "Starting scanning failed", e);
         }
@@ -142,10 +141,8 @@ public class ScannerService extends Service {
             callback = callbacks.remove(callbackIntent);
             shouldStop = callbacks.isEmpty();
         }
-
-        if (callback == null) {
+        if (callback == null)
             return;
-        }
 
         try {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
@@ -154,8 +151,7 @@ public class ScannerService extends Service {
             Log.e(TAG, "Stopping scanning failed", e);
         }
 
-        if (shouldStop) {
+        if (shouldStop)
             stopSelf();
-        }
     }
 }

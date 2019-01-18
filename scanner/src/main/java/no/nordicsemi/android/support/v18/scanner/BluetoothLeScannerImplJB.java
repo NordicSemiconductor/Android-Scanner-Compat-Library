@@ -45,7 +45,12 @@ import java.util.Map;
 @SuppressWarnings("deprecation")
 /* package */ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 
+	/**
+	 * A map that stores {@link ScanCallbackWrapper}s for user's {@link ScanCallback}.
+	 * Each wrapper keeps track of found and lost devices and allows to emulate batching.
+	 */
 	@NonNull private final Map<ScanCallback, ScanCallbackWrapper> wrappers = new HashMap<>();
+
 	@Nullable private HandlerThread handlerThread;
 	@Nullable private Handler powerSaveHandler;
 
