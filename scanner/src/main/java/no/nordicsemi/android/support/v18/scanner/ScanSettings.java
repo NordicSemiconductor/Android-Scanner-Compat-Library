@@ -27,6 +27,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
+import java.util.List;
+
 /**
  * Bluetooth LE scan settings are passed to {@link BluetoothLeScannerCompat#startScan} to define the
  * parameters for the scan.

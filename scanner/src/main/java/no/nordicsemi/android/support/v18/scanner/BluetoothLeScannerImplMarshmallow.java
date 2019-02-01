@@ -33,14 +33,15 @@ import android.support.annotation.NonNull;
 	@NonNull
 	@Override
 	/* package */ android.bluetooth.le.ScanSettings toNativeScanSettings(@NonNull final BluetoothAdapter adapter,
-																		 @NonNull final ScanSettings settings) {
+																		 @NonNull final ScanSettings settings,
+																		 final boolean exactCopy) {
 		final android.bluetooth.le.ScanSettings.Builder builder =
 				new android.bluetooth.le.ScanSettings.Builder();
 
-		if (adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
+		if (exactCopy || adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
 
-		if (settings.getUseHardwareCallbackTypesIfSupported())
+		if (exactCopy || settings.getUseHardwareCallbackTypesIfSupported())
 			builder.setCallbackType(settings.getCallbackType())
 					.setMatchMode(settings.getMatchMode())
 					.setNumOfMatches(settings.getNumOfMatches());

@@ -464,7 +464,7 @@ public final class ScanFilter implements Parcelable {
 		/**
 		 * Set filter on device name.
 		 */
-		public Builder setDeviceName(@NonNull final String deviceName) {
+		public Builder setDeviceName(@Nullable final String deviceName) {
 			this.deviceName = deviceName;
 			return this;
 		}
@@ -477,8 +477,7 @@ public final class ScanFilter implements Parcelable {
 		 *            {@link BluetoothAdapter#checkBluetoothAddress}.
 		 * @throws IllegalArgumentException If the {@code deviceAddress} is invalid.
 		 */
-		public Builder setDeviceAddress(@NonNull final String deviceAddress) {
-			//noinspection ConstantConditions
+		public Builder setDeviceAddress(@Nullable final String deviceAddress) {
 			if (deviceAddress != null && !BluetoothAdapter.checkBluetoothAddress(deviceAddress)) {
 				throw new IllegalArgumentException("invalid device address " + deviceAddress);
 			}
@@ -489,7 +488,7 @@ public final class ScanFilter implements Parcelable {
 		/**
 		 * Set filter on service uuid.
 		 */
-		public Builder setServiceUuid(@NonNull final ParcelUuid serviceUuid) {
+		public Builder setServiceUuid(@Nullable final ParcelUuid serviceUuid) {
 			this.serviceUuid = serviceUuid;
 			this.uuidMask = null; // clear uuid mask
 			return this;
@@ -503,9 +502,8 @@ public final class ScanFilter implements Parcelable {
 		 * @throws IllegalArgumentException If {@code serviceUuid} is {@code null} but
 		 *             {@code uuidMask} is not {@code null}.
 		 */
-		public Builder setServiceUuid(@NonNull  final ParcelUuid serviceUuid,
+		public Builder setServiceUuid(@Nullable final ParcelUuid serviceUuid,
 									  @Nullable final ParcelUuid uuidMask) {
-			//noinspection ConstantConditions
 			if (uuidMask != null && serviceUuid == null) {
 				throw new IllegalArgumentException("uuid is null while uuidMask is not null!");
 			}
@@ -519,11 +517,13 @@ public final class ScanFilter implements Parcelable {
 		 *
 		 * @throws IllegalArgumentException If {@code serviceDataUuid} is null.
 		 */
-		public Builder setServiceData(@NonNull final ParcelUuid serviceDataUuid,
-									  @NonNull final byte[] serviceData) {
-			//noinspection ConstantConditions
-			if (serviceDataUuid == null) {
-				throw new IllegalArgumentException("serviceDataUuid is null");
+		public Builder setServiceData(@Nullable final ParcelUuid serviceDataUuid,
+									  @Nullable final byte[] serviceData) {
+			if (serviceDataUuid == null && serviceData != null) {
+				throw new IllegalArgumentException("serviceDataUuid is null!");
+			}
+			if (serviceDataUuid != null && serviceData == null) {
+				throw new IllegalArgumentException("serviceData is null!");
 			}
 			this.serviceDataUuid = serviceDataUuid;
 			this.serviceData = serviceData;
@@ -541,15 +541,13 @@ public final class ScanFilter implements Parcelable {
 		 *             {@code serviceDataMask} is {@code null} while {@code serviceData} is not or
 		 *             {@code serviceDataMask} and {@code serviceData} has different length.
 		 */
-		public Builder setServiceData(@NonNull  final ParcelUuid serviceDataUuid,
-									  @NonNull  final byte[] serviceData,
+		public Builder setServiceData(@Nullable final ParcelUuid serviceDataUuid,
+									  @Nullable final byte[] serviceData,
 									  @Nullable final byte[] serviceDataMask) {
-			//noinspection ConstantConditions
-			if (serviceDataUuid == null) {
+			if (serviceDataUuid == null && serviceData != null) {
 				throw new IllegalArgumentException("serviceDataUuid is null");
 			}
 			if (serviceDataMask != null) {
-				//noinspection ConstantConditions
 				if (serviceData == null) {
 					throw new IllegalArgumentException(
 							"serviceData is null while serviceDataMask is not null");
@@ -575,8 +573,7 @@ public final class ScanFilter implements Parcelable {
 		 * @throws IllegalArgumentException If the {@code manufacturerId} is invalid.
 		 */
 		public Builder setManufacturerData(final int manufacturerId,
-										   @NonNull final byte[] manufacturerData) {
-			//noinspection ConstantConditions
+										   @Nullable final byte[] manufacturerData) {
 			if (manufacturerData != null && manufacturerId < 0) {
 				throw new IllegalArgumentException("invalid manufacture id");
 			}
@@ -598,14 +595,12 @@ public final class ScanFilter implements Parcelable {
 		 *             length.
 		 */
 		public Builder setManufacturerData(final int manufacturerId,
-										   @NonNull final byte[] manufacturerData,
+										   @Nullable final byte[] manufacturerData,
 										   @Nullable final byte[] manufacturerDataMask) {
-			//noinspection ConstantConditions
 			if (manufacturerData != null && manufacturerId < 0) {
 				throw new IllegalArgumentException("invalid manufacture id");
 			}
 			if (manufacturerDataMask != null) {
-				//noinspection ConstantConditions
 				if (manufacturerData == null) {
 					throw new IllegalArgumentException(
 							"manufacturerData is null while manufacturerDataMask is not null");

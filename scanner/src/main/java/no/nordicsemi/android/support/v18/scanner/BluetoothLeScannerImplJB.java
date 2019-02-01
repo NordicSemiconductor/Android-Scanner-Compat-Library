@@ -23,8 +23,11 @@
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
@@ -32,16 +35,22 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/* package */
-@SuppressWarnings("deprecation")
-class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 
+@SuppressWarnings("deprecation")
+/* package */ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
+
+	/**
+	 * A map that stores {@link ScanCallbackWrapper}s for user's {@link ScanCallback}.
+	 * Each wrapper keeps track of found and lost devices and allows to emulate batching.
+	 */
 	@NonNull private final Map<ScanCallback, ScanCallbackWrapper> wrappers = new HashMap<>();
+
 	@Nullable private HandlerThread handlerThread;
 	@Nullable private Handler powerSaveHandler;
 
@@ -113,34 +122,26 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 	}
 
 	@Override
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
-	@SuppressWarnings("deprecation")
-	public void stopScan(@NonNull final ScanCallback callback) {
-		//noinspection ConstantConditions
-		if (callback == null) {
-			throw new IllegalArgumentException("scanCallback cannot be null!");
-		}
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	/* package */ void stopScanInternal(@NonNull final ScanCallback callback) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
 
 		boolean shouldStop;
 		ScanCallbackWrapper wrapper;
 		synchronized (wrappers) {
-			wrapper = wrappers.get(callback);
-			if (wrapper == null)
-				return;
-
-			wrappers.remove(callback);
+			wrapper = wrappers.remove(callback);
 			shouldStop = wrappers.isEmpty();
 		}
+		if (wrapper == null)
+			return;
 
 		wrapper.close();
 
 		setPowerSaveSettings();
 
 		if (shouldStop) {
-			final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-			if (adapter != null) {
-				adapter.stopLeScan(this.scanCallback);
-			}
+			adapter.stopLeScan(scanCallback);
 
 			if (powerSaveHandler != null) {
 				powerSaveHandler.removeCallbacksAndMessages(null);
@@ -151,6 +152,36 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 				handlerThread = null;
 			}
 		}
+	}
+
+	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
+										 @NonNull final ScanSettings settings,
+										 @NonNull final Context context,
+										 @NonNull final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
+
+		final Intent service = new Intent(context, ScannerService.class);
+		service.putParcelableArrayListExtra(ScannerService.EXTRA_FILTERS, new ArrayList<>(filters));
+		service.putExtra(ScannerService.EXTRA_SETTINGS, settings);
+		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_START, true);
+		context.startService(service);
+	}
+
+	@Override
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	/* package */ void stopScanInternal(@NonNull final Context context,
+										@NonNull final PendingIntent callbackIntent) {
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		BluetoothLeUtils.checkAdapterStateOn(adapter);
+
+		final Intent service = new Intent(context, ScannerService.class);
+		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_START, false);
+		context.startService(service);
 	}
 
 	@Override
@@ -223,7 +254,7 @@ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 					wrapper.handler.post(new Runnable() {
 						@Override
 						public void run() {
-							wrapper.handleScanResult(scanResult);
+							wrapper.handleScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
 						}
 					});
 				}

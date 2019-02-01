@@ -23,6 +23,8 @@
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.Manifest;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -47,12 +49,43 @@ import java.util.Set;
  * <p>
  * Use {@link BluetoothLeScannerCompat#getScanner()} to get an instance of the scanner.
  * <p>
+ * Since version 1.3.0 of the Scanner Compar Library library,
+ * {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
+ * whether the scanning with {@link PendingIntent} feature is used or not.
+ * The {@link ScannerService} is used to emulate such scanning on platforms
+ * before Oreo, while {@link PendingIntentReceiver} is used to translate from native
+ * {@link android.bluetooth.le.ScanResult} to compat {@link ScanResult} and apply additional
+ * filtering.
+ * <p>
  * <b>Note:</b> Most of the scan methods here require
  * {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
  *
  * @see ScanFilter
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class BluetoothLeScannerCompat {
+
+	/**
+	 * Extra containing a list of ScanResults. It can have one or more results if there was no
+	 * error. In case of error, {@link #EXTRA_ERROR_CODE} will contain the error code and this
+	 * extra will not be available.
+	 */
+	public static final String EXTRA_LIST_SCAN_RESULT =
+			"android.bluetooth.le.extra.LIST_SCAN_RESULT";
+
+	/**
+	 * Optional extra indicating the error code, if any. The error code will be one of the
+	 * SCAN_FAILED_* codes in {@link android.bluetooth.le.ScanCallback}.
+	 */
+	public static final String EXTRA_ERROR_CODE = "android.bluetooth.le.extra.ERROR_CODE";
+
+	/**
+	 * Optional extra indicating the callback type, which will be one of
+	 * CALLBACK_TYPE_* constants in {@link android.bluetooth.le.ScanSettings}.
+	 *
+	 * @see android.bluetooth.le.ScanCallback#onScanResult(int, android.bluetooth.le.ScanResult)
+	 */
+	public static final String EXTRA_CALLBACK_TYPE = "android.bluetooth.le.extra.CALLBACK_TYPE";
 
 	private static BluetoothLeScannerCompat instance;
 
@@ -60,6 +93,7 @@ public abstract class BluetoothLeScannerCompat {
 	 * Returns the scanner compat object
 	 * @return scanner implementation
 	 */
+	@NonNull
 	public synchronized static BluetoothLeScannerCompat getScanner() {
 		if (instance != null)
 			return instance;
@@ -88,7 +122,7 @@ public abstract class BluetoothLeScannerCompat {
 	 */
 	@SuppressWarnings("WeakerAccess")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(@NonNull final ScanCallback callback) {
+	public final void startScan(@NonNull final ScanCallback callback) {
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
@@ -113,9 +147,9 @@ public abstract class BluetoothLeScannerCompat {
 	 */
 	@SuppressWarnings("unused")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(@Nullable final List<ScanFilter> filters,
-						  @Nullable final ScanSettings settings,
-						  @NonNull  final ScanCallback callback) {
+	public final void startScan(@Nullable final List<ScanFilter> filters,
+								@Nullable final ScanSettings settings,
+								@NonNull  final ScanCallback callback) {
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
@@ -142,10 +176,10 @@ public abstract class BluetoothLeScannerCompat {
 	 */
 	@SuppressWarnings("unused")
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	public void startScan(@Nullable final List<ScanFilter> filters,
-						  @Nullable final ScanSettings settings,
-						  @NonNull  final ScanCallback callback,
-						  @Nullable final Handler handler) {
+	public final void startScan(@Nullable final List<ScanFilter> filters,
+								@Nullable final ScanSettings settings,
+								@NonNull  final ScanCallback callback,
+								@Nullable final Handler handler) {
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
@@ -153,6 +187,22 @@ public abstract class BluetoothLeScannerCompat {
 		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
 				settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler != null ? handler : new Handler(Looper.getMainLooper()));
+	}
+
+	/**
+	 * Stops an ongoing Bluetooth LE scan.
+	 * <p>
+	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 *
+	 * @param callback The callback used to start scanning.
+	 */
+	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
+	public final void stopScan(@NonNull final ScanCallback callback) {
+		//noinspection ConstantConditions
+		if (callback == null) {
+			throw new IllegalArgumentException("callback is null");
+		}
+		stopScanInternal(callback);
 	}
 
 	/**
@@ -170,14 +220,106 @@ public abstract class BluetoothLeScannerCompat {
 												  @NonNull Handler handler);
 
 	/**
+	 * Stops an ongoing Bluetooth LE scan. Its implementation depends on the Android version.
+	 *
+	 * @param callback The callback used to start scanning.
+	 */
+	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
+	/* package */ abstract void stopScanInternal(@NonNull ScanCallback callback);
+
+	/**
+	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
+	 * via the PendingIntent. On platforms before Oreo this will start {@link ScannerService}
+	 * which will scan in background using given settings.
+	 * <p>
+	 * This method of scanning is intended to work in background. Long running scanning may
+	 * consume a lot of battery, so it is recommended to use low power mode in settings,
+	 * offloaded filtering and batching. However, the library may emulate batching, filtering or
+	 * callback types {@link ScanSettings#CALLBACK_TYPE_FIRST_MATCH} and
+	 * {@link ScanSettings#CALLBACK_TYPE_MATCH_LOST} if they are not supported.
+	 * <p>
+	 * A {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
+	 * whether this feature is used or not.
+	 * <p>
+	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 * An app must hold
+	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
+	 * in order to get results.
+	 * <p>
+	 * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
+	 * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
+	 * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
+	 *
+	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
+	 * @param settings       Optional settings for the scan.
+	 * @param context        Context used to start {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent to deliver the result to.
+	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+	 */
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	public final void startScan(@Nullable final List<ScanFilter> filters,
+								@Nullable final ScanSettings settings,
+								@NonNull  final Context context,
+								@NonNull  final PendingIntent callbackIntent) {
+		//noinspection ConstantConditions
+		if (callbackIntent == null) {
+			throw new IllegalArgumentException("callbackIntent is null");
+		}
+		//noinspection ConstantConditions
+		if (context == null) {
+			throw new IllegalArgumentException("context is null");
+		}
+		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+				settings != null ? settings : new ScanSettings.Builder().build(),
+				context, callbackIntent);
+	}
+
+	/**
 	 * Stops an ongoing Bluetooth LE scan.
 	 * <p>
 	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
 	 *
-	 * @param callback the callback used to start scanning.
+	 * @param context        Context used to stop {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent that was used to start the scan.
 	 */
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
-	public abstract void stopScan(@NonNull ScanCallback callback);
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	public final void stopScan(@NonNull final Context context,
+							   @NonNull final PendingIntent callbackIntent) {
+		//noinspection ConstantConditions
+		if (callbackIntent == null) {
+			throw new IllegalArgumentException("callbackIntent is null");
+		}
+		//noinspection ConstantConditions
+		if (context == null) {
+			throw new IllegalArgumentException("context is null");
+		}
+		stopScanInternal(context, callbackIntent);
+	}
+
+	/**
+	 * Starts Bluetooth LE scan using PendingIntent.
+	 * Its implementation depends on the Android version.
+	 *
+	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
+	 * @param settings       Settings for the scan.
+	 * @param context        Context used to start {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent to deliver the result to.
+	 */
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	/* package */ abstract void startScanInternal(@NonNull List<ScanFilter> filters,
+												  @NonNull ScanSettings settings,
+												  @NonNull Context context,
+												  @NonNull PendingIntent callbackIntent);
+
+	/**
+	 * Stops an ongoing Bluetooth LE scan.
+	 *
+	 * @param context        Context used to stop {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent that was used to start the scan.
+	 */
+	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+	/* package */ abstract void stopScanInternal(@NonNull Context context,
+												 @NonNull PendingIntent callbackIntent);
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth
@@ -258,8 +400,8 @@ public abstract class BluetoothLeScannerCompat {
 										  @NonNull final ScanCallback callback,
 										  @NonNull final Handler handler) {
 			this.filters = Collections.unmodifiableList(filters);
-            this.scanSettings = settings;
-            this.scanCallback = callback;
+			this.scanSettings = settings;
+			this.scanCallback = callback;
 			this.handler = handler;
 			this.scanningStopped = false;
 
@@ -299,7 +441,8 @@ public abstract class BluetoothLeScannerCompat {
 			}
 		}
 
-		/* package */ void handleScanResult(@NonNull final ScanResult scanResult) {
+		/* package */ void handleScanResult(final int callbackType,
+											@NonNull final ScanResult scanResult) {
 			if (scanningStopped || !filters.isEmpty() && !matches(scanResult))
 				return;
 
@@ -344,7 +487,7 @@ public abstract class BluetoothLeScannerCompat {
 					return;
 				}
 
-				scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
+				scanCallback.onScanResult(callbackType, scanResult);
 			}
 		}
 
