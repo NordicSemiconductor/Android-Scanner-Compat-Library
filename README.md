@@ -78,7 +78,8 @@ In order to do that, a background service will be started after calling
 `scanner.startScan(filters, settings, context, pendingIntent)`, which will be scanning in 
 background with given settings and will send the given `PendingIntent` when a device 
 matching filter is found. To lower battery consumption it is recommended to set 
-`ScanSettings.SCAN_MODE_LOW_POWER` scanning mode and use filter. To stop scanning call 
+`ScanSettings.SCAN_MODE_LOW_POWER` scanning mode and use filter, but even with those conditions fulfilled
+**the battery consumption will be significantly higher than on Oreo+**. To stop scanning call 
 `scanner.stopScan(context, pendingIntent)` with 
 [the same](https://developer.android.com/reference/android/app/PendingIntent) intent in parameter. 
 The service will be stopped when the last scan was stopped.
