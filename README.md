@@ -79,12 +79,13 @@ In order to do that, a background service will be started after calling
 background with given settings and will send the given `PendingIntent` when a device 
 matching filter is found. To lower battery consumption it is recommended to set 
 `ScanSettings.SCAN_MODE_LOW_POWER` scanning mode and use filter. To stop scanning call 
-`scanner.stopScan(context, pendingIntent)` with the same intent in parameter. 
-The service will be stopped when a last scan was stopped.
+`scanner.stopScan(context, pendingIntent)` with 
+[the same](https://developer.android.com/reference/android/app/PendingIntent) intent in parameter. 
+The service will be stopped when the last scan was stopped.
 
-On Android Oreo or newer this library will use the native scanning mechanism, but may also 
-emulate batching or apply filtering when `useHardwareBatchingIfSupported` or `useHardwareFilteringIfSupported` 
-were called with parameter *false*. Even if not, the library will register its own broadcast 
+On Android Oreo or newer this library will use the native scanning mechanism. However, as it may also 
+emulate batching or apply filtering (when `useHardwareBatchingIfSupported` or `useHardwareFilteringIfSupported` 
+were called with parameter *false*) the library will register its own broadcast 
 receiver that will translate results from native to compat classes. 
 
 The receiver and service will be added automatically to the manifest even if they are not used by 
