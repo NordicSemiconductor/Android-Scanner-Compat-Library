@@ -15,11 +15,11 @@ due to the Bluetooth chipset capabilities.
 ### Background scanning
 
 `SCAN_MODE_LOW_POWER` or `SCAN_MODE_OPPORTUNISTIC` should be used when scanning in background.
-Note, that newer Androdi versions will enforce using low power mode in background, even if another one has been set.
+Note, that newer Android versions will enforce using low power mode in background, even if another one has been set.
 This library allows to emulate [scanning with PendingIntent](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner.html#startScan(java.util.List%3Candroid.bluetooth.le.ScanFilter%3E,%20android.bluetooth.le.ScanSettings,%20android.app.PendingIntent))
 on pre-Oreo devices by starting a background service that will scan with requested scan mode. 
 This is much less battery friendly than when the original method is used, but works and saves
-a lot of developement time if such feature should be implemented anyway. Please read below 
+a lot of development time if such feature should be implemented anyway. Please read below 
 for more details.
 
 ## Usage
@@ -75,7 +75,7 @@ to stop scanning use:
 ### Scanning modes
 
 There are 4 scanning modes available in native [ScanSettings](https://developer.android.com/reference/android/bluetooth/le/ScanSettings).
-3 of them are available since Android Lollipop while the opportunistic scan mode has been added in Marshamllow.
+3 of them are available since Android Lollipop while the opportunistic scan mode has been added in Marshmallow.
 This library tries to emulate them on platforms where they are not supported natively.
 1. [SCAN_MODE_LOW_POWER](https://developer.android.com/reference/android/bluetooth/le/ScanSettings#SCAN_MODE_LOW_POWER) - 
 Perform Bluetooth LE scan in low power mode. This is the default scan mode as it consumes the least power. 
@@ -177,12 +177,12 @@ To stop scanning call:
 	scanner.stopScan(context, pendingIntent);
 ```
 
-## Background scanning guidlines
+## Background scanning guidelines
 
 To save power it is recommended to use as low power settings as possible and and use filters.
 However, the more battery friendly settings are used, the longest time to finding a device.
 In general, scanning with `PendingIntent` and `SCAN_MODE_LOW_POWER` or `SCAN_MODE_OPPORTUNISTIC`
-should be used, toghether with report delay set and filters used.
+should be used, together with report delay set and filters used.
 `useHardwareFilteringIfSupported` and `useHardwareBatchingIfSupported` should be set to *true* (default).
 
 Background scanning on Android 4.3 and 4.4.x will use a lot of power, as all those properties 
