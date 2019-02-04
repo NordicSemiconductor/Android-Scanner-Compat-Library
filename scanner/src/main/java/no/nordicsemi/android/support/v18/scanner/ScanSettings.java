@@ -50,18 +50,30 @@ public final class ScanSettings implements Parcelable {
 	/**
 	 * A special Bluetooth LE scan mode. Applications using this scan mode will passively listen for
 	 * other scan results without starting BLE scans themselves.
+	 * <p>
+	 * On Android Lollipop {@link #SCAN_MODE_LOW_POWER} will be used instead, as opportunistic
+	 * mode was not yet supported.
+	 * <p>
+	 * On pre-Lollipop devices it is possible to override the default intervals
+	 * using {@link Builder#setPowerSave(long, long)}.
 	 */
 	public static final int SCAN_MODE_OPPORTUNISTIC = -1;
 
 	/**
 	 * Perform Bluetooth LE scan in low power mode. This is the default scan mode as it consumes the
-	 * least power.
+	 * least power. This mode is enforced if the scanning application is not in foreground.
+	 * <p>
+	 * On pre-Lollipop devices this mode will be emulated by scanning for 0.5 second followed
+	 * by 4.5 second of idle, which corresponds to the low power intervals on Lollipop or newer.
 	 */
 	public static final int SCAN_MODE_LOW_POWER = 0;
 
 	/**
 	 * Perform Bluetooth LE scan in balanced power mode. Scan results are returned at a rate that
 	 * provides a good trade-off between scan frequency and power consumption.
+	 * <p>
+	 * On pre-Lollipop devices this mode will be emulated by scanning for 2 second followed
+	 * by 3 seconds of idle, which corresponds to the low power intervals on Lollipop or newer.
 	 */
 	public static final int SCAN_MODE_BALANCED = 1;
 
@@ -341,10 +353,19 @@ public final class ScanSettings implements Parcelable {
 
 		/**
 		 * Set scan mode for Bluetooth LE scan.
+		 * <p>
+		 * {@link #SCAN_MODE_OPPORTUNISTIC} is supported on Android Marshmallow onwards.
+		 * On Lollipop this mode will fall back {@link #SCAN_MODE_LOW_POWER}, which actually means
+		 * that the library will start its own scan instead of relying on scans from other apps.
+		 * This may have significant impact on battery usage.
+		 * <p>
+		 * On pre-Lollipop devices, the settings set by {@link #setPowerSave(long, long)}
+		 * will be used. By default, the intervals are the same as for {@link #SCAN_MODE_LOW_POWER}.
 		 *
 		 * @param scanMode The scan mode can be one of {@link ScanSettings#SCAN_MODE_LOW_POWER},
-		 *                 {@link ScanSettings#SCAN_MODE_BALANCED} or
-		 *                 {@link ScanSettings#SCAN_MODE_LOW_LATENCY}.
+		 *                 {@link #SCAN_MODE_BALANCED},
+		 *                 {@link #SCAN_MODE_LOW_LATENCY} or
+		 *                 {@link #SCAN_MODE_OPPORTUNISTIC}.
 		 * @throws IllegalArgumentException If the {@code scanMode} is invalid.
 		 */
 		@NonNull
@@ -575,11 +596,46 @@ public final class ScanSettings implements Parcelable {
 		 */
 		@NonNull
 		public ScanSettings build() {
+			if (powerSaveRestInterval == 0 && powerSaveScanInterval == 0)
+				updatePowerSaveSettings();
+
 			return new ScanSettings(scanMode, callbackType, reportDelayMillis, matchMode,
 					numOfMatchesPerFilter, legacy, phy, useHardwareFilteringIfSupported,
 					useHardwareBatchingIfSupported, useHardwareCallbackTypesIfSupported,
 					matchLostDeviceTimeout, matchLostTaskInterval,
 					powerSaveScanInterval, powerSaveRestInterval);
+		}
+
+		/**
+		 * Sets power save settings based on the scan mode selected.
+		 */
+		private void updatePowerSaveSettings() {
+			switch (scanMode) {
+				case SCAN_MODE_LOW_LATENCY:
+					// Disable power save mode
+					powerSaveScanInterval = 0;
+					powerSaveRestInterval = 0;
+					break;
+				case SCAN_MODE_BALANCED:
+					// Scan for 2 seconds every 5 seconds
+					powerSaveScanInterval = 2000;
+					powerSaveRestInterval = 3000;
+					break;
+				case SCAN_MODE_OPPORTUNISTIC:
+					// It is not possible to emulate OPPORTUNISTIC scanning, but in theory
+					// that should be even less battery consuming than LOW_POWER.
+					// For pre-Lollipop devices intervals can be overwritten by
+					// setPowerSave(long, long) if needed.
+
+					// On Android Lollipop the native SCAN_MODE_LOW_POWER will be used instead
+					// of power save values.
+				case SCAN_MODE_LOW_POWER:
+				default:
+					// Scan for 0.5 second every 5 seconds
+					powerSaveScanInterval = 500;
+					powerSaveRestInterval = 4500;
+					break;
+			}
 		}
 	}
 }

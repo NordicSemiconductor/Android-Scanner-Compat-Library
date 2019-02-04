@@ -183,7 +183,13 @@ import java.util.Map;
 		if (exactCopy || adapter.isOffloadedScanBatchingSupported() && settings.getUseHardwareBatchingIfSupported())
 			builder.setReportDelay(settings.getReportDelayMillis());
 
-		builder.setScanMode(settings.getScanMode());
+		if (settings.getScanMode() != ScanSettings.SCAN_MODE_OPPORTUNISTIC) {
+			builder.setScanMode(settings.getScanMode());
+		} else {
+			// SCAN MORE OPPORTUNISTIC is not supported on Lollipop.
+			// Instead, SCAN_MODE_LOW_POWER will be used.
+			builder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
+		}
 
 		settings.disableUseHardwareCallbackTypes(); // callback types other then CALLBACK_TYPE_ALL_MATCHES are not supported on Lollipop
 
