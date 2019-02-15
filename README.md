@@ -28,7 +28,7 @@ The compat library may be found on jcenter repository. Add it to your project by
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.3.0'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.3.1'
 ```
 
 ## API
@@ -95,7 +95,7 @@ without starting BLE scans themselves.
 3 first modes are emulated on Android 4.3 and 4.4.x by starting a handler task that scans for a period of time
 and rests in between. To set scanning and rest intervals use `Builder#setPowerSave(long,long)`.
 
-Oportunistic scanning is not possible to emulate and will fallback to `SCAN_MODE_LOW_POWER` on Lollipop and
+Opportunistic scanning is not possible to emulate and will fallback to `SCAN_MODE_LOW_POWER` on Lollipop and
 power save settings on pre-Lollipop devices. That means that this library actually will initiate scanning 
 on its own. This may have impact on battery consumption and should be used with care.
 
