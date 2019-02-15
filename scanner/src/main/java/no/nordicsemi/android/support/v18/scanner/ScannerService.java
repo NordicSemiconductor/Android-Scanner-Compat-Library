@@ -95,7 +95,15 @@ public class ScannerService extends Service {
     @Override
     public void onTaskRemoved(final Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        stopSelf();
+        // Stopping self here would cause the service to be killed when user removes the task
+        // from Recents. This is not the behavior found in Oreo+.
+        // Related issue: https://github.com/NordicSemiconductor/Android-Scanner-Compat-Library/issues/45
+
+        // Even with this line removed, the service will stop receiving devices when the phone
+        // enters Doze mode.
+        // Find out more here: https://developer.android.com/training/monitoring-device-state/doze-standby
+
+        // stopSelf();
     }
 
     @Override

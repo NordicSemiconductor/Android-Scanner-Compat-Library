@@ -177,6 +177,9 @@ To stop scanning call:
 	scanner.stopScan(context, pendingIntent);
 ```
 
+**Note:** Android versions 6 and 7 will not report any advertising packets when in Doze mode.
+Read more about it here: https://developer.android.com/training/monitoring-device-state/doze-standby
+
 ## Background scanning guidelines
 
 To save power it is recommended to use as low power settings as possible and and use filters.
