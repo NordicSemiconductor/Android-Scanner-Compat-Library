@@ -22,7 +22,7 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.util.List;
 

@@ -17,7 +17,7 @@
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.os.ParcelUuid;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.runner.AndroidJUnit4;
 import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
