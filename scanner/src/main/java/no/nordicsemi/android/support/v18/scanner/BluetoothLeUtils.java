@@ -18,8 +18,8 @@ package no.nordicsemi.android.support.v18.scanner;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresPermission;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 import android.util.SparseArray;
 
 import java.util.Arrays;
