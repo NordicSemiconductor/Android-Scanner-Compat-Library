@@ -26,7 +26,6 @@ import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Build;
-import android.os.Build.VERSION;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -90,7 +89,7 @@ public abstract class BluetoothLeScannerCompat {
 
 	private static BluetoothLeScannerCompat instance;
 
-	private static int versionSdkInt = VERSION.SDK_INT;
+	private static int versionSdkInt = Build.VERSION.SDK_INT;
 
 	public static void setScannerApi(int versionSdkInt) {
         BluetoothLeScannerCompat.versionSdkInt = versionSdkInt;
