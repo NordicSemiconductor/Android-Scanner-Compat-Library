@@ -28,10 +28,10 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-/**7
+/**
  * ScanResult for Bluetooth LE scan.
  */
-@SuppressWarnings({"WeakerAccess", "unused", "DeprecatedIsStillUsed"})
+@SuppressWarnings({"WeakerAccess", "unused"})
 public final class ScanResult implements Parcelable {
 
 	/**
@@ -108,7 +108,6 @@ public final class ScanResult implements Parcelable {
 	 * @param timestampNanos Timestamp at which the scan result was observed.
 	 * @deprecated use {@link #ScanResult(BluetoothDevice, int, int, int, int, int, int, int, ScanRecord, long)}
 	 */
-	@SuppressWarnings("PointlessBitwiseExpression")
 	public ScanResult(@NonNull final BluetoothDevice device, @Nullable final ScanRecord scanRecord,
 					  int rssi, long timestampNanos) {
 		this.device = device;

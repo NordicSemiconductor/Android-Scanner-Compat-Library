@@ -58,7 +58,6 @@ import java.util.Map;
 	private long powerSaveScanInterval;
 
 	private final Runnable powerSaveSleepTask = new Runnable() {
-		@SuppressWarnings("deprecation")
 		@Override
 		@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 		public void run() {
@@ -71,7 +70,6 @@ import java.util.Map;
 	};
 
 	private final Runnable powerSaveScanTask = new Runnable() {
-		@SuppressWarnings("deprecation")
 		@Override
 		@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 		public void run() {
@@ -87,7 +85,6 @@ import java.util.Map;
 
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-	@SuppressWarnings("deprecation")
 	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
 										 @NonNull final ScanSettings settings,
 										 @NonNull final ScanCallback callback,
