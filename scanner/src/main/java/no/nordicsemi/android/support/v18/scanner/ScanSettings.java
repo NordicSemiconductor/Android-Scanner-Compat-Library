@@ -25,9 +25,10 @@ package no.nordicsemi.android.support.v18.scanner;
 import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.Parcelable;
-import androidx.annotation.NonNull;
 
 import java.util.List;
+
+import androidx.annotation.NonNull;
 
 /**
  * Bluetooth LE scan settings are passed to {@link BluetoothLeScannerCompat#startScan} to define the

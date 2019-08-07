@@ -24,8 +24,6 @@
 package no.nordicsemi.android.support.v18.scanner;
 
 import android.os.ParcelUuid;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -34,6 +32,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Represents a scan record from Bluetooth LE scan.

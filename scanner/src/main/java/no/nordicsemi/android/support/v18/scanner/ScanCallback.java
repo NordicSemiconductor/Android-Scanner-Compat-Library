@@ -22,9 +22,9 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import androidx.annotation.NonNull;
-
 import java.util.List;
+
+import androidx.annotation.NonNull;
 
 /**
  * Bluetooth LE scan callbacks. Scan results are reported using these callbacks.

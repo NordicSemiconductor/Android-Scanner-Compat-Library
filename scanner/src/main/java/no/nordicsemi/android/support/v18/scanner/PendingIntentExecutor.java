@@ -6,12 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * A ScanCallback that will send a {@link PendingIntent} when callback's methods are called.

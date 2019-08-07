@@ -32,13 +32,14 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresPermission;
 
 @SuppressWarnings({"deprecation", "WeakerAccess"})
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
