@@ -137,7 +137,7 @@ public class ScannerService extends Service {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
             scannerCompat.startScanInternal(filters, settings, executor, handler);
         } catch (final Exception e) {
-            Log.e(TAG, "Starting scanning failed", e);
+            Log.w(TAG, "Starting scanning failed", e);
         }
     }
 
@@ -156,7 +156,7 @@ public class ScannerService extends Service {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
             scannerCompat.stopScan(callback);
         } catch (final Exception e) {
-            Log.e(TAG, "Stopping scanning failed", e);
+            Log.w(TAG, "Stopping scanning failed", e);
         }
 
         if (shouldStop)

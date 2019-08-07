@@ -88,8 +88,6 @@ import java.util.List;
 										 @NonNull  final Context context,
 										 @NonNull  final PendingIntent callbackIntent) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
@@ -117,8 +115,6 @@ import java.util.List;
 	/* package */ void stopScanInternal(@NonNull final Context context,
 										@NonNull final PendingIntent callbackIntent) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");

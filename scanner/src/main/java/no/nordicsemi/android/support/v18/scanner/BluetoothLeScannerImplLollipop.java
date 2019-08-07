@@ -55,8 +55,6 @@ import java.util.Map;
 										 @NonNull final ScanCallback callback,
 										 @NonNull final Handler handler) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
@@ -86,13 +84,6 @@ import java.util.Map;
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void stopScanInternal(@NonNull final ScanCallback callback) {
-		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
-		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
-		if (scanner == null)
-			throw new IllegalStateException("BT le scanner not available");
-
 		ScanCallbackWrapperLollipop wrapper;
 		synchronized (wrappers) {
 			wrapper = wrappers.remove(callback);
@@ -102,7 +93,12 @@ import java.util.Map;
 
 		wrapper.close();
 
-		scanner.stopScan(wrapper.nativeCallback);
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		if (adapter != null) {
+			final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+			if (scanner != null)
+				scanner.stopScan(wrapper.nativeCallback);
+		}
 	}
 
 	@Override
@@ -112,8 +108,6 @@ import java.util.Map;
 											 @NonNull final Context context,
 											 @NonNull final PendingIntent callbackIntent) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
@@ -130,13 +124,6 @@ import java.util.Map;
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 		/* package */ void stopScanInternal(@NonNull final Context context,
 											@NonNull final PendingIntent callbackIntent) {
-		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
-
-		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
-		if (scanner == null)
-			throw new IllegalStateException("BT le scanner not available");
-
 		final Intent service = new Intent(context, ScannerService.class);
 		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
 		service.putExtra(ScannerService.EXTRA_START, false);
@@ -147,7 +134,6 @@ import java.util.Map;
 	@RequiresPermission(Manifest.permission.BLUETOOTH)
 	public void flushPendingScanResults(@NonNull final ScanCallback callback) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		BluetoothLeUtils.checkAdapterStateOn(adapter);
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback cannot be null!");
