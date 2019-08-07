@@ -16,16 +16,14 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import android.Manifest;
-import android.bluetooth.BluetoothAdapter;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import android.util.SparseArray;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import androidx.annotation.Nullable;
 
 /**
  * Helper class for Bluetooth LE utils.
@@ -126,19 +124,6 @@ class BluetoothLeUtils {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Ensure Bluetooth is turned on.
-	 *
-	 * @throws IllegalStateException If {@code adapter} is null or Bluetooth state is not
-	 *             {@link BluetoothAdapter#STATE_ON}.
-	 */
-	@RequiresPermission(Manifest.permission.BLUETOOTH)
-	static void checkAdapterStateOn(@Nullable final BluetoothAdapter adapter) {
-		if (adapter == null || adapter.getState() != BluetoothAdapter.STATE_ON) {
-			throw new IllegalStateException("BT Adapter is not turned ON");
-		}
 	}
 
 }

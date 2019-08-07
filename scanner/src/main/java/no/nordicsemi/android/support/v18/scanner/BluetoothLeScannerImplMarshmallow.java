@@ -25,6 +25,7 @@ package no.nordicsemi.android.support.v18.scanner;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.os.Build;
+
 import androidx.annotation.NonNull;
 
 @TargetApi(Build.VERSION_CODES.M)

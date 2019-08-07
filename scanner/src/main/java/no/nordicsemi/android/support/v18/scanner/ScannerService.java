@@ -7,15 +7,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 
 /**
  * A service that will emulate
@@ -137,7 +138,7 @@ public class ScannerService extends Service {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
             scannerCompat.startScanInternal(filters, settings, executor, handler);
         } catch (final Exception e) {
-            Log.e(TAG, "Starting scanning failed", e);
+            Log.w(TAG, "Starting scanning failed", e);
         }
     }
 
@@ -156,7 +157,7 @@ public class ScannerService extends Service {
             final BluetoothLeScannerCompat scannerCompat = BluetoothLeScannerCompat.getScanner();
             scannerCompat.stopScan(callback);
         } catch (final Exception e) {
-            Log.e(TAG, "Stopping scanning failed", e);
+            Log.w(TAG, "Stopping scanning failed", e);
         }
 
         if (shouldStop)

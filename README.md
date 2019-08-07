@@ -28,7 +28,7 @@ The compat library may be found on jcenter repository. Add it to your project by
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.4.1'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.4.2'
 ```
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.

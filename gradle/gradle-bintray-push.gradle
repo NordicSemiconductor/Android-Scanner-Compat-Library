@@ -89,7 +89,7 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 
 bintray {
     user = properties.getProperty("BINTRAY_USER")
-    key  = properties.getProperty("APIKEY")
+    key  = properties.getProperty("BINTRAY_APIKEY")
 
     configurations = ['archives']
     pkg {
@@ -97,7 +97,7 @@ bintray {
         desc = POM_DESCRIPTION
 
         userOrg = properties.getProperty("BINTRAY_USER_ORG")
-        repo    = properties.getProperty("REPO")
+        repo    = properties.getProperty("BINTRAY_REPO")
 
         websiteUrl      = POM_URL
         issueTrackerUrl = POM_URL + "/issues"
