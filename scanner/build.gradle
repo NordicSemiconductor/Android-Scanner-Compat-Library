@@ -41,4 +41,4 @@ dependencies {
     testImplementation "org.powermock:powermock-api-mockito:1.7.4"
 }
 
-apply from: rootProject.file('gradle/gradle-bintray-push.gradle')
+//apply from: rootProject.file('gradle/gradle-bintray-push.gradle')
