@@ -20,6 +20,11 @@ android {
             testCoverageEnabled true
         }
     }
+
+    /** Stops "DuplicateRelativeFileException: More than one file was found with OS independent path 'README.txt'" issue **/
+    packagingOptions {
+        exclude 'README.txt'
+    }
 }
 
 dependencies {
@@ -29,12 +34,12 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.3.0-alpha02'
     androidTestImplementation 'org.hamcrest:hamcrest-library:2.1'
     androidTestImplementation ('junit:junit:4.13-beta-3') {
-      exclude module: 'hamcrest-core'
+        exclude module: 'hamcrest-core'
     }
 
     testImplementation 'org.hamcrest:hamcrest-library:2.1'
     testImplementation ('junit:junit:4.13-beta-3') {
-      exclude module: 'hamcrest-core'
+        exclude module: 'hamcrest-core'
     }
     testImplementation "org.mockito:mockito-core:2.18.0"
     testImplementation "org.powermock:powermock-module-junit4:1.7.4"
