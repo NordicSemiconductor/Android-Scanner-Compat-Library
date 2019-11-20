@@ -340,8 +340,8 @@ public final class ScanFilter implements Parcelable {
 		// Service data match
 		if (serviceDataUuid != null && scanRecord != null) {
 			List<ParcelUuid> serviceDataUuids = new ArrayList<ParcelUuid>(scanRecord.getServiceData().keySet());
-			if (!matchesServiceUuids(serviceDataUuid, serviceDataUuidMask, serviceDataUuids) || !matchesPartialData(serviceData, serviceDataMask,
-					scanRecord.getServiceData(serviceDataUuid, serviceDataUuidMask))) {
+			if (!matchesServiceUuids(serviceDataUuid, serviceDataUuidMask, serviceDataUuids)
+					|| !matchesPartialData(serviceData, serviceDataMask, scanRecord.getServiceData(serviceDataUuid, serviceDataUuidMask))) {
 				return false;
 			}
 		}
