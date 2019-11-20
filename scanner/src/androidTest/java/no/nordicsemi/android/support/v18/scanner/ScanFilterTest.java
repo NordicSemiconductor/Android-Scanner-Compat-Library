@@ -108,6 +108,13 @@ import static junit.framework.Assert.assertTrue;
     assertTrue("partial service data filter fails", filter.matches(scanResult));
     filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData).build();
     assertFalse("service data filter fails", filter.matches(scanResult));
+
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), setServiceData).build();
+    assertTrue("service data filter fails", filter.matches(scanResult));
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), nonMatchData, mask).build();
+    assertTrue("partial service data filter fails", filter.matches(scanResult));
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), nonMatchData).build();
+    assertFalse("service data filter fails", filter.matches(scanResult));
   }
 
   @Test public void testManufacturerSpecificData() {
@@ -154,19 +161,30 @@ import static junit.framework.Assert.assertTrue;
         filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
             ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF")).build();
     testReadWriteParcelForFilter(filter);
+
     byte[] serviceData = new byte[] {
         0x50, 0x64
     };
     ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
     filter = filterBuilder.setServiceData(serviceDataUuid, serviceData).build();
     testReadWriteParcelForFilter(filter);
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+        ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), serviceData).build();
+    testReadWriteParcelForFilter(filter);
     filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
+    testReadWriteParcelForFilter(filter);
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+        ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), new byte[0]).build();
     testReadWriteParcelForFilter(filter);
     byte[] serviceDataMask = new byte[] {
         (byte) 0xFF, (byte) 0xFF
     };
     filter = filterBuilder.setServiceData(serviceDataUuid, serviceData, serviceDataMask).build();
     testReadWriteParcelForFilter(filter);
+    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+        ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), serviceData, serviceDataMask).build();
+    testReadWriteParcelForFilter(filter);
+
     byte[] manufacturerData = new byte[] {
         0x02, 0x15
     };
