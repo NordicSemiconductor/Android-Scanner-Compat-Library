@@ -109,7 +109,10 @@ import static junit.framework.Assert.assertTrue;
     filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData).build();
     assertFalse("service data filter fails", filter.matches(scanResult));
 
-    filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), setServiceData).build();
+    filter = filterBuilder.setServiceData(
+            ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+            ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"),
+            setServiceData).build();
     assertTrue("service data filter fails", filter.matches(scanResult));
     filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), nonMatchData, mask).build();
     assertTrue("partial service data filter fails", filter.matches(scanResult));
