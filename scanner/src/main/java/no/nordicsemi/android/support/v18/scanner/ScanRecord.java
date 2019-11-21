@@ -159,15 +159,24 @@ public final class ScanRecord {
 
 		byte[] data = null;
 		int count = 0;
+		StringBuilder logging = new StringBuilder();
 		for (Map.Entry<ParcelUuid, byte[]> entry: serviceData.entrySet()) {
 			if(ScanRecordMatchers.matchesServiceUuid(serviceDataUuid.getUuid(), serviceDataUuidMask.getUuid(), entry.getKey().getUuid())) {
 				data = entry.getValue();
+				logging.append("serviceDataUuid ");
+				logging.append(count);
+				logging.append(" = ");
+				logging.append(entry.getKey().getUuid());
+				logging.append(", ");
 				count++;
 			}
 		}
 
-		if(count > 1)
-			throw new IllegalArgumentException("More than 1 service data uuid was returned; please provide more specific uuid mask");
+		if(count > 1) {
+			Log.e("ScanRecord", count + " similar service data uuids were found in this ScanRecord; " +
+					"please provide more specific uuid mask or tackle duplication. " +
+					"ScanRecord data: " + logging);
+		}
 
 		return data;
 	}
