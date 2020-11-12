@@ -8,7 +8,7 @@ This fork allows for the filtering of advertising packets by service **data**, t
 Use this library fork in the same way as [NordicSemiconductor's Android-Scanner-Compat-Library](https://github.com/NordicSemiconductor/Android-Scanner-Compat-Library), but, if you want to filter by a **masked** service _data_ UUID, do so like this:
 
 ```java
-	ParcelUuid serviceUuid = ParcelUuid.fromString("000086b1-6913-89b3-df42-2eba463253f6");
+	ParcelUuid serviceUuid = ParcelUuid.fromString("000065y8-5451-2g67-674d-3gds456712g1");
 	ParcelUuid serviceUuidMask = ParcelUuid.fromString("0000FFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF");
 	...
 	List<ScanFilter> filters = new ArrayList<>();	
