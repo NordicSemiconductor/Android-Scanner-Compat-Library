@@ -54,33 +54,38 @@ public class ScannerService extends Service {
     @Override
     @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
     public int onStartCommand(final Intent intent, final int flags, final int startId) {
-        final PendingIntent callbackIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT);
-        final boolean start = intent.getBooleanExtra(EXTRA_START, false);
-        final boolean stop = !start;
+        //
+        // null intent observed on Samsung Galaxy J7 Android 6.0.1
+        //
+        if (intent != null) {
+            final PendingIntent callbackIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT);
+            final boolean start = intent.getBooleanExtra(EXTRA_START, false);
+            final boolean stop = !start;
 
-        if (callbackIntent == null) {
-            boolean shouldStop;
-            synchronized (LOCK) {
-                shouldStop = callbacks.isEmpty();
+            if (callbackIntent == null) {
+                boolean shouldStop;
+                synchronized (LOCK) {
+                    shouldStop = callbacks.isEmpty();
+                }
+                if (shouldStop)
+                    stopSelf();
+                return START_NOT_STICKY;
             }
-            if (shouldStop)
-                stopSelf();
-            return START_NOT_STICKY;
-        }
 
-        boolean knownCallback;
-        synchronized (LOCK) {
-            knownCallback = callbacks.containsKey(callbackIntent);
-        }
+            boolean knownCallback;
+            synchronized (LOCK) {
+                knownCallback = callbacks.containsKey(callbackIntent);
+            }
 
-        if (start && !knownCallback) {
-            final ArrayList<ScanFilter> filters = intent.getParcelableArrayListExtra(EXTRA_FILTERS);
-            final ScanSettings settings = intent.getParcelableExtra(EXTRA_SETTINGS);
-            startScan(filters != null ? filters : Collections.<ScanFilter>emptyList(),
-                    settings != null ? settings : new ScanSettings.Builder().build(),
-                    callbackIntent);
-        } else if (stop && knownCallback) {
-            stopScan(callbackIntent);
+            if (start && !knownCallback) {
+                final ArrayList<ScanFilter> filters = intent.getParcelableArrayListExtra(EXTRA_FILTERS);
+                final ScanSettings settings = intent.getParcelableExtra(EXTRA_SETTINGS);
+                startScan(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+                        settings != null ? settings : new ScanSettings.Builder().build(),
+                        callbackIntent);
+            } else if (stop && knownCallback) {
+                stopScan(callbackIntent);
+            }
         }
 
         return START_NOT_STICKY;
