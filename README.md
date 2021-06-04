@@ -1,6 +1,6 @@
 # Android BLE Scanner Compat library
 
-[ ![Download](https://api.bintray.com/packages/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/images/download.svg) ](https://bintray.com/nordic/android/no.nordicsemi.android.support.v18%3Ascanner/_latestVersion)
+[ ![Download](https://maven-badges.herokuapp.com/maven-central/no.nordicsemi.android.support.v18/scanner/badge.svg?style=plastic) ](https://search.maven.org/artifact/no.nordicsemi.android.support.v18/scanner)
 
 The Scanner Compat library solves the problem with scanning for Bluetooth Low Energy devices on Android. 
 The scanner API, initially created in Android 4.3, has changed in Android 5.0 and has been extended in 6.0 and 8.0. 
@@ -24,14 +24,29 @@ for more details.
 
 ## Usage
 
-The compat library may be found on jcenter repository. Add it to your project by adding the 
+The compat library may be found on Maven Central repository. Add it to your project by adding the 
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.4.2'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.4.4'
 ```
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
+
+As JCenter has shut down, starting from version 1.4.4 the library is available only on Maven Central. 
+Make sure you have `mavenCentral()` in your main *build.gradle* file:
+```gradle
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
 
 ## API
 
@@ -59,7 +74,7 @@ To start scanning use (example):
 	ScanSettings settings = new ScanSettings.Builder()
 				.setLegacy(false)
 				.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-				.setReportDelay(1000)
+				.setReportDelay(5000)
 				.setUseHardwareBatchingIfSupported(true)
 				.build();
 	List<ScanFilter> filters = new ArrayList<>();

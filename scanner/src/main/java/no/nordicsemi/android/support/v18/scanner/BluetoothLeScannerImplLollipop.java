@@ -194,10 +194,14 @@ import androidx.annotation.RequiresPermission;
 	@NonNull
 	/* package */ android.bluetooth.le.ScanFilter toNativeScanFilter(@NonNull final ScanFilter filter) {
 		final android.bluetooth.le.ScanFilter.Builder builder = new android.bluetooth.le.ScanFilter.Builder();
-		builder.setDeviceAddress(filter.getDeviceAddress())
-				.setDeviceName(filter.getDeviceName())
-				.setServiceUuid(filter.getServiceUuid(), filter.getServiceUuidMask())
+		builder.setServiceUuid(filter.getServiceUuid(), filter.getServiceUuidMask())
 				.setManufacturerData(filter.getManufacturerId(), filter.getManufacturerData(), filter.getManufacturerDataMask());
+
+		if (filter.getDeviceAddress() != null)
+			builder.setDeviceAddress(filter.getDeviceAddress());
+
+		if (filter.getDeviceName() != null)
+			builder.setDeviceName(filter.getDeviceName());
 
 		if (filter.getServiceDataUuid() != null)
 			builder.setServiceData(filter.getServiceDataUuid(), filter.getServiceData(), filter.getServiceDataMask());
