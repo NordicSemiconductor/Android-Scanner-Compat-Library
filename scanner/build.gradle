@@ -45,8 +45,8 @@ dependencies {
 // when the module is loaded to a different project.
 if (rootProject.file('gradle/publish-module.gradle').exists()) {
     ext {
-        POM_ARTIFACT_ID = 'ble'
-        POM_NAME = 'Bluetooth Low Energy library for Android'
+        POM_ARTIFACT_ID = 'scanner'
+        POM_NAME = 'Android Bluetooth LE Scanner Compat library'
         POM_PACKAGING = 'aar'
     }
     apply from: rootProject.file('gradle/publish-module.gradle')
