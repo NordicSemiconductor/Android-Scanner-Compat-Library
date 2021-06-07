@@ -28,7 +28,7 @@ The compat library may be found on Maven Central repository. Add it to your proj
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.4.5'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.5.0'
 ```
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
@@ -47,6 +47,11 @@ allprojects {
     }
 }
 ```
+
+Since version 1.5 you will need to [enable desugaring of Java 8 language features](https://developer.android.com/studio/write/java8-support.html#supported_features) 
+if you have not already done so.(And if you are releasing an Android library, then anyone who uses 
+that library will also have to enable desugaring.) We expect for nearly all Android projects to have 
+already enabled desugaring. But if this causes problems for you, please use version 1.4.5.
 
 ## API
 
