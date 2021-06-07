@@ -28,7 +28,7 @@ The compat library may be found on Maven Central repository. Add it to your proj
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.4.4'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.4.5'
 ```
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
@@ -144,12 +144,12 @@ your application has been killed (the receiver must be added in *AndroidManifest
 
 Starting from version 1.3.0, this library may emulate such feature on older Android versions.
 In order to do that, a background service will be started after calling 
-`scanner.startScan(filters, settings, context, pendingIntent)`, which will be scanning in 
+`scanner.startScan(filters, settings, context, pendingIntent, requestCode)`, which will be scanning in 
 background with given settings and will send the given `PendingIntent` when a device 
 matching filter is found. To lower battery consumption it is recommended to set 
 `ScanSettings.SCAN_MODE_LOW_POWER` scanning mode and use filter, but even with those conditions fulfilled
 **the battery consumption will be significantly higher than on Oreo+**. To stop scanning call 
-`scanner.stopScan(context, pendingIntent)` with 
+`scanner.stopScan(context, pendingIntent, requestCode)` with 
 [the same](https://developer.android.com/reference/android/app/PendingIntent) intent in parameter. 
 The service will be stopped when the last scan was stopped.
 
@@ -167,7 +167,7 @@ To use this feature:
     Intent intent = new Intent(context, MyReceiver.class); // explicite intent 
 	intent.setAction("com.example.ACTION_FOUND");
 	intent.putExtra("some.extra", value); // optional
-	PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+	PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	
 	BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
 	ScanSettings settings = new ScanSettings.Builder()
@@ -176,7 +176,7 @@ To use this feature:
 				.build();
 	List<ScanFilter> filters = new ArrayList<>();
 	filters.add(new ScanFilter.Builder().setServiceUuid(mUuid).build());
-	scanner.startScan(filters, settings, context, pendingIntent);
+	scanner.startScan(filters, settings, context, pendingIntent, requestCode);
 ```
 
 Add your `MyRecever` to *AndroidManifest*, as the application context might have been released 
@@ -185,17 +185,21 @@ and all broadcast receivers registered to it together with it.
 To stop scanning call:
 
 ```java
-	// To stop scanning use the same or an equal PendingIntent (check PendingIntent documentation)
+	// To stop scanning use the same PendingIntent and request code as one used to start scanning.
     Intent intent = new Intent(context, MyReceiver.class);
 	intent.setAction("com.example.ACTION_FOUND");
-	PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+	PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 	
 	BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
-	scanner.stopScan(context, pendingIntent);
+	scanner.stopScan(context, pendingIntent, requestCode);
 ```
 
 **Note:** Android versions 6 and 7 will not report any advertising packets when in Doze mode.
 Read more about it here: https://developer.android.com/training/monitoring-device-state/doze-standby
+
+**Note 2:** An additional parameter called `requestCode` was added in version 1.4.5 to the above API.
+It is to ensure that the scanning would be correctly stopped. If not provided, a request code equal
+to 0 will be used preventing from having multiple scanning tasks. 
 
 ## Background scanning guidelines
 

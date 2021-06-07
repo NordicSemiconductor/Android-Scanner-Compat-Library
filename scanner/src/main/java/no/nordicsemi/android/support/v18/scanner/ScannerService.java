@@ -35,13 +35,14 @@ public class ScannerService extends Service {
     private static final String TAG = "ScannerService";
 
     /* package */ static final String EXTRA_PENDING_INTENT = "no.nordicsemi.android.support.v18.EXTRA_PENDING_INTENT";
+    /* package */ static final String EXTRA_REQUEST_CODE = "no.nordicsemi.android.support.v18.REQUEST_CODE";
     /* package */ static final String EXTRA_FILTERS = "no.nordicsemi.android.support.v18.EXTRA_FILTERS";
     /* package */ static final String EXTRA_SETTINGS = "no.nordicsemi.android.support.v18.EXTRA_SETTINGS";
     /* package */ static final String EXTRA_START = "no.nordicsemi.android.support.v18.EXTRA_START";
 
     @NonNull private final Object LOCK = new Object();
 
-    private HashMap<PendingIntent, ScanCallback> callbacks;
+    private HashMap<Integer, ScanCallback> callbacks;
     private Handler handler;
 
     @Override
@@ -59,6 +60,7 @@ public class ScannerService extends Service {
         //
         if (intent != null) {
             final PendingIntent callbackIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT);
+            final int requestCode = intent.getIntExtra(EXTRA_REQUEST_CODE, 0);
             final boolean start = intent.getBooleanExtra(EXTRA_START, false);
             final boolean stop = !start;
 
@@ -74,7 +76,7 @@ public class ScannerService extends Service {
 
             boolean knownCallback;
             synchronized (LOCK) {
-                knownCallback = callbacks.containsKey(callbackIntent);
+                knownCallback = callbacks.containsKey(requestCode);
             }
 
             if (start && !knownCallback) {
@@ -82,9 +84,9 @@ public class ScannerService extends Service {
                 final ScanSettings settings = intent.getParcelableExtra(EXTRA_SETTINGS);
                 startScan(filters != null ? filters : Collections.<ScanFilter>emptyList(),
                         settings != null ? settings : new ScanSettings.Builder().build(),
-                        callbackIntent);
+                        callbackIntent, requestCode);
             } else if (stop && knownCallback) {
-                stopScan(callbackIntent);
+                stopScan(requestCode);
             }
         }
 
@@ -132,11 +134,12 @@ public class ScannerService extends Service {
     @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
     private void startScan(@NonNull final List<ScanFilter> filters,
                            @NonNull final ScanSettings settings,
-                           @NonNull final PendingIntent callbackIntent) {
+                           @NonNull final PendingIntent callbackIntent,
+                           final int requestCode) {
         final PendingIntentExecutor executor =
                 new PendingIntentExecutor(callbackIntent, settings, this);
         synchronized (LOCK) {
-            callbacks.put(callbackIntent, executor);
+            callbacks.put(requestCode, executor);
         }
 
         try {
@@ -148,11 +151,11 @@ public class ScannerService extends Service {
     }
 
     @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-    private void stopScan(@NonNull final PendingIntent callbackIntent) {
+    private void stopScan(final int requestCode) {
         ScanCallback callback;
         boolean shouldStop;
         synchronized (LOCK) {
-            callback = callbacks.remove(callbackIntent);
+            callback = callbacks.remove(requestCode);
             shouldStop = callbacks.isEmpty();
         }
         if (callback == null)

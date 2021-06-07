@@ -155,11 +155,13 @@ import androidx.annotation.RequiresPermission;
 	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
 										 @NonNull final ScanSettings settings,
 										 @NonNull final Context context,
-										 @NonNull final PendingIntent callbackIntent) {
+										 @NonNull final PendingIntent callbackIntent,
+										 final int requestCode) {
 		final Intent service = new Intent(context, ScannerService.class);
 		service.putParcelableArrayListExtra(ScannerService.EXTRA_FILTERS, new ArrayList<>(filters));
 		service.putExtra(ScannerService.EXTRA_SETTINGS, settings);
 		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_REQUEST_CODE, requestCode);
 		service.putExtra(ScannerService.EXTRA_START, true);
 		context.startService(service);
 	}
@@ -167,9 +169,11 @@ import androidx.annotation.RequiresPermission;
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void stopScanInternal(@NonNull final Context context,
-										@NonNull final PendingIntent callbackIntent) {
+										@NonNull final PendingIntent callbackIntent,
+										final int requestCode) {
 		final Intent service = new Intent(context, ScannerService.class);
 		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
+		service.putExtra(ScannerService.EXTRA_REQUEST_CODE, requestCode);
 		service.putExtra(ScannerService.EXTRA_START, false);
 		context.startService(service);
 	}
