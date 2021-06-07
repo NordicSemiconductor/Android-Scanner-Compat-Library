@@ -82,7 +82,7 @@ public class ScannerService extends Service {
             if (start && !knownCallback) {
                 final ArrayList<ScanFilter> filters = intent.getParcelableArrayListExtra(EXTRA_FILTERS);
                 final ScanSettings settings = intent.getParcelableExtra(EXTRA_SETTINGS);
-                startScan(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+                startScan(filters != null ? filters : Collections.emptyList(),
                         settings != null ? settings : new ScanSettings.Builder().build(),
                         callbackIntent, requestCode);
             } else if (stop && knownCallback) {

@@ -25,7 +25,6 @@ package no.nordicsemi.android.support.v18.scanner;
 import android.Manifest;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
@@ -234,22 +233,14 @@ import androidx.annotation.RequiresPermission;
 		}
 	}
 
-	private final BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
-		@Override
-		public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-			final ScanResult scanResult = new ScanResult(device, ScanRecord.parseFromBytes(scanRecord),
-					rssi, SystemClock.elapsedRealtimeNanos());
+	private final BluetoothAdapter.LeScanCallback scanCallback = (device, rssi, scanRecord) -> {
+		final ScanResult scanResult = new ScanResult(device, ScanRecord.parseFromBytes(scanRecord),
+				rssi, SystemClock.elapsedRealtimeNanos());
 
-			synchronized (wrappers) {
-				final Collection<ScanCallbackWrapper> scanCallbackWrappers = wrappers.values();
-				for (final ScanCallbackWrapper wrapper : scanCallbackWrappers) {
-					wrapper.handler.post(new Runnable() {
-						@Override
-						public void run() {
-							wrapper.handleScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult);
-						}
-					});
-				}
+		synchronized (wrappers) {
+			final Collection<ScanCallbackWrapper> scanCallbackWrappers = wrappers.values();
+			for (final ScanCallbackWrapper wrapper : scanCallbackWrappers) {
+				wrapper.handler.post(() -> wrapper.handleScanResult(ScanSettings.CALLBACK_TYPE_ALL_MATCHES, scanResult));
 			}
 		}
 	};
