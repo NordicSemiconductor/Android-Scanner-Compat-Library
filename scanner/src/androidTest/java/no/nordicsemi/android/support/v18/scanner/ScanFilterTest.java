@@ -20,175 +20,186 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.os.Parcel;
 import android.os.ParcelUuid;
-import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-@RunWith(AndroidJUnit4.class) public class ScanFilterTest {
+import static com.google.common.truth.Truth.assertThat;
 
-  private static final String DEVICE_MAC = "01:02:03:04:05:AB";
-  private ScanResult scanResult;
-  private ScanFilter.Builder filterBuilder;
+@RunWith(AndroidJUnit4.class)
+public class ScanFilterTest {
 
-  @Before public void setup() {
-    byte[] scanRecord = new byte[] {
-        0x02, 0x01, 0x1a, // advertising flags
-        0x05, 0x02, 0x0b, 0x11, 0x0a, 0x11, // 16 bit service uuids
-        0x04, 0x09, 0x50, 0x65, 0x64, // setName
-        0x02, 0x0A, (byte) 0xec, // tx power level
-        0x05, 0x16, 0x0b, 0x11, 0x50, 0x64, // service data
-        0x05, (byte) 0xff, (byte) 0xe0, 0x00, 0x02, 0x15, // manufacturer specific data
-        0x03, 0x50, 0x01, 0x02, // an unknown data type won't cause trouble
-    };
+	private static final String DEVICE_MAC = "01:02:03:04:05:AB";
+	private ScanResult scanResult;
+	private ScanFilter.Builder filterBuilder;
 
-    final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-    final BluetoothDevice device = adapter.getRemoteDevice(DEVICE_MAC);
+	@Before
+	public void setup() {
+		final byte[] scanRecord = new byte[]{
+				0x02, 0x01, 0x1a, // advertising flags
+				0x05, 0x02, 0x0b, 0x11, 0x0a, 0x11, // 16 bit service uuids
+				0x04, 0x09, 0x50, 0x65, 0x64, // setName
+				0x02, 0x0A, (byte) 0xec, // tx power level
+				0x05, 0x16, 0x0b, 0x11, 0x50, 0x64, // service data
+				0x05, (byte) 0xff, (byte) 0xe0, 0x00, 0x02, 0x15, // manufacturer specific data
+				0x03, 0x50, 0x01, 0x02, // an unknown data type won't cause trouble
+		};
 
-    scanResult =
-        new ScanResult(device, ScanRecord.parseFromBytes(scanRecord), -10, 1397545200000000L);
-    filterBuilder = new ScanFilter.Builder();
-  }
+		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		final BluetoothDevice device = adapter.getRemoteDevice(DEVICE_MAC);
 
-  @Test public void testsetNameFilter() {
-    ScanFilter filter = filterBuilder.setDeviceName("Ped").build();
-    assertTrue("setName filter fails", filter.matches(scanResult));
-    filter = filterBuilder.setDeviceName("Pem").build();
-    assertFalse("setName filter fails", filter.matches(scanResult));
-  }
+		scanResult = new ScanResult(device,
+				ScanRecord.parseFromBytes(scanRecord), -10, 1397545200000000L);
+		filterBuilder = new ScanFilter.Builder();
+	}
 
-  @Test public void testDeviceFilter() {
-    ScanFilter filter = filterBuilder.setDeviceAddress(DEVICE_MAC).build();
-    assertTrue("device filter fails", filter.matches(scanResult));
-    filter = filterBuilder.setDeviceAddress("11:22:33:44:55:66").build();
-    assertFalse("device filter fails", filter.matches(scanResult));
-  }
+	@Test
+	public void testSetNameFilter() {
+		ScanFilter filter = filterBuilder.setDeviceName("Ped").build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder.setDeviceName("Pem").build();
+		assertThat(filter.matches(scanResult)).isFalse();
+	}
 
-  @Test public void testsetServiceUuidFilter() {
-    ScanFilter filter =
-        filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB"))
-            .build();
-    assertTrue("uuid filter fails", filter.matches(scanResult));
-    filter =
-        filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"))
-            .build();
-    assertFalse("uuid filter fails", filter.matches(scanResult));
-    filter =
-        filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
-            ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF")).build();
-    assertTrue("uuid filter fails", filter.matches(scanResult));
-  }
+	@Test
+	public void testDeviceFilter() {
+		ScanFilter filter = filterBuilder.setDeviceAddress(DEVICE_MAC).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder.setDeviceAddress("11:22:33:44:55:66").build();
+		assertThat(filter.matches(scanResult)).isFalse();
+	}
 
-  @Test public void testsetServiceDataFilter() {
-    byte[] setServiceData = new byte[] {
-        0x50, 0x64
-    };
-    ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
-    ScanFilter filter = filterBuilder.setServiceData(serviceDataUuid, setServiceData).build();
-    assertTrue("service data filter fails", filter.matches(scanResult));
-    byte[] emptyData = new byte[0];
-    filter = filterBuilder.setServiceData(serviceDataUuid, emptyData).build();
-    assertTrue("service data filter fails", filter.matches(scanResult));
-    byte[] prefixData = new byte[] {
-        0x50
-    };
-    filter = filterBuilder.setServiceData(serviceDataUuid, prefixData).build();
-    assertTrue("service data filter fails", filter.matches(scanResult));
-    byte[] nonMatchData = new byte[] {
-        0x51, 0x64
-    };
-    byte[] mask = new byte[] {
-        (byte) 0x00, (byte) 0xFF
-    };
-    filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData, mask).build();
-    assertTrue("partial service data filter fails", filter.matches(scanResult));
-    filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData).build();
-    assertFalse("service data filter fails", filter.matches(scanResult));
-  }
+	@Test
+	public void testSetServiceUuidFilter() {
+		ScanFilter filter = filterBuilder
+				.setServiceUuid(ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB"))
+				.build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder
+				.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"))
+				.build();
+		assertThat(filter.matches(scanResult)).isFalse();
+		filter = filterBuilder
+				.setServiceUuid(
+						ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+						ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF")
+				)
+				.build();
+		assertThat(filter.matches(scanResult)).isTrue();
+	}
 
-  @Test public void testManufacturerSpecificData() {
-    byte[] setManufacturerData = new byte[] {
-        0x02, 0x15
-    };
-    int manufacturerId = 0xE0;
-    ScanFilter filter =
-        filterBuilder.setManufacturerData(manufacturerId, setManufacturerData).build();
-    assertTrue("manufacturer data filter fails", filter.matches(scanResult));
-    byte[] emptyData = new byte[0];
-    filter = filterBuilder.setManufacturerData(manufacturerId, emptyData).build();
-    assertTrue("manufacturer data filter fails", filter.matches(scanResult));
-    byte[] prefixData = new byte[] {
-        0x02
-    };
-    filter = filterBuilder.setManufacturerData(manufacturerId, prefixData).build();
-    assertTrue("manufacturer data filter fails", filter.matches(scanResult));
-    // Test data mask
-    byte[] nonMatchData = new byte[] {
-        0x02, 0x14
-    };
-    filter = filterBuilder.setManufacturerData(manufacturerId, nonMatchData).build();
-    assertFalse("manufacturer data filter fails", filter.matches(scanResult));
-    byte[] mask = new byte[] {
-        (byte) 0xFF, (byte) 0x00
-    };
-    filter = filterBuilder.setManufacturerData(manufacturerId, nonMatchData, mask).build();
-    assertTrue("partial setManufacturerData filter fails", filter.matches(scanResult));
-  }
+	@Test
+	public void testSetServiceDataFilter() {
+		final byte[] setServiceData = new byte[]{
+				0x50, 0x64
+		};
+		ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
+		ScanFilter filter = filterBuilder.setServiceData(serviceDataUuid, setServiceData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		byte[] emptyData = new byte[0];
+		filter = filterBuilder.setServiceData(serviceDataUuid, emptyData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		byte[] prefixData = new byte[]{
+				0x50
+		};
+		filter = filterBuilder.setServiceData(serviceDataUuid, prefixData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		final byte[] nonMatchData = new byte[]{
+				0x51, 0x64
+		};
+		final byte[] mask = new byte[]{
+				(byte) 0x00, (byte) 0xFF
+		};
+		filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData, mask).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData).build();
+		assertThat(filter.matches(scanResult)).isFalse();
+	}
 
-  @Test public void testReadWriteParcel() {
-    ScanFilter filter = filterBuilder.build();
-    testReadWriteParcelForFilter(filter);
-    filter = filterBuilder.setDeviceName("Ped").build();
-    testReadWriteParcelForFilter(filter);
-    filter = filterBuilder.setDeviceAddress("11:22:33:44:55:66").build();
-    testReadWriteParcelForFilter(filter);
-    filter =
-        filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"))
-            .build();
-    testReadWriteParcelForFilter(filter);
-    filter =
-        filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
-            ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF")).build();
-    testReadWriteParcelForFilter(filter);
-    byte[] serviceData = new byte[] {
-        0x50, 0x64
-    };
-    ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
-    filter = filterBuilder.setServiceData(serviceDataUuid, serviceData).build();
-    testReadWriteParcelForFilter(filter);
-    filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
-    testReadWriteParcelForFilter(filter);
-    byte[] serviceDataMask = new byte[] {
-        (byte) 0xFF, (byte) 0xFF
-    };
-    filter = filterBuilder.setServiceData(serviceDataUuid, serviceData, serviceDataMask).build();
-    testReadWriteParcelForFilter(filter);
-    byte[] manufacturerData = new byte[] {
-        0x02, 0x15
-    };
-    int manufacturerId = 0xE0;
-    filter = filterBuilder.setManufacturerData(manufacturerId, manufacturerData).build();
-    testReadWriteParcelForFilter(filter);
-    filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
-    testReadWriteParcelForFilter(filter);
-    byte[] manufacturerDataMask = new byte[] {
-        (byte) 0xFF, (byte) 0xFF
-    };
-    filter =
-        filterBuilder.setManufacturerData(manufacturerId, manufacturerData, manufacturerDataMask)
-            .build();
-    testReadWriteParcelForFilter(filter);
-  }
+	@Test
+	public void testManufacturerSpecificData() {
+		final byte[] setManufacturerData = new byte[]{
+				0x02, 0x15
+		};
+		final int manufacturerId = 0xE0;
+		ScanFilter filter =
+				filterBuilder.setManufacturerData(manufacturerId, setManufacturerData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		byte[] emptyData = new byte[0];
+		filter = filterBuilder.setManufacturerData(manufacturerId, emptyData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		byte[] prefixData = new byte[]{
+				0x02
+		};
+		filter = filterBuilder.setManufacturerData(manufacturerId, prefixData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		// Test data mask
+		byte[] nonMatchData = new byte[]{
+				0x02, 0x14
+		};
+		filter = filterBuilder.setManufacturerData(manufacturerId, nonMatchData).build();
+		assertThat(filter.matches(scanResult)).isFalse();
+		byte[] mask = new byte[]{
+				(byte) 0xFF, (byte) 0x00
+		};
+		filter = filterBuilder.setManufacturerData(manufacturerId, nonMatchData, mask).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+	}
 
-  private void testReadWriteParcelForFilter(ScanFilter filter) {
-    Parcel parcel = Parcel.obtain();
-    filter.writeToParcel(parcel, 0);
-    parcel.setDataPosition(0);
-    ScanFilter filterFromParcel = ScanFilter.CREATOR.createFromParcel(parcel);
-    assertEquals(filter, filterFromParcel);
-  }
+	@Test
+	public void testReadWriteParcel() {
+		ScanFilter filter = filterBuilder.build();
+		testReadWriteParcelForFilter(filter);
+		filter = filterBuilder.setDeviceName("Ped").build();
+		testReadWriteParcelForFilter(filter);
+		filter = filterBuilder.setDeviceAddress("11:22:33:44:55:66").build();
+		testReadWriteParcelForFilter(filter);
+		filter =
+				filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"))
+						.build();
+		testReadWriteParcelForFilter(filter);
+		filter =
+				filterBuilder.setServiceUuid(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+						ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF")).build();
+		testReadWriteParcelForFilter(filter);
+		final byte[] serviceData = new byte[]{
+				0x50, 0x64
+		};
+		final ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
+		filter = filterBuilder.setServiceData(serviceDataUuid, serviceData).build();
+		testReadWriteParcelForFilter(filter);
+		filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
+		testReadWriteParcelForFilter(filter);
+		final byte[] serviceDataMask = new byte[]{
+				(byte) 0xFF, (byte) 0xFF
+		};
+		filter = filterBuilder.setServiceData(serviceDataUuid, serviceData, serviceDataMask).build();
+		testReadWriteParcelForFilter(filter);
+		final byte[] manufacturerData = new byte[]{
+				0x02, 0x15
+		};
+		final int manufacturerId = 0xE0;
+		filter = filterBuilder.setManufacturerData(manufacturerId, manufacturerData).build();
+		testReadWriteParcelForFilter(filter);
+		filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
+		testReadWriteParcelForFilter(filter);
+		final byte[] manufacturerDataMask = new byte[]{
+				(byte) 0xFF, (byte) 0xFF
+		};
+		filter = filterBuilder
+				.setManufacturerData(manufacturerId, manufacturerData, manufacturerDataMask)
+				.build();
+		testReadWriteParcelForFilter(filter);
+	}
+
+	private void testReadWriteParcelForFilter(final ScanFilter filter) {
+		final Parcel parcel = Parcel.obtain();
+		filter.writeToParcel(parcel, 0);
+		parcel.setDataPosition(0);
+		final ScanFilter filterFromParcel = ScanFilter.CREATOR.createFromParcel(parcel);
+		assertThat(filter).isEqualTo(filterFromParcel);
+	}
 }

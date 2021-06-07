@@ -2,9 +2,7 @@ package no.nordicsemi.android.support.v18.scanner;
 
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static com.google.common.truth.Truth.assertThat;
 
 public class ObjectsTest {
 
@@ -16,8 +14,7 @@ public class ObjectsTest {
     final String nullString = Objects.toString(objectA);
 
     // Then
-    assertThat(nullString, is(notNullValue()));
-    assertThat(nullString, is("null"));
+    assertThat(nullString).isEqualTo("null");
   }
 
   @Test public void toString_nonNullValueAsParam_returnObjectToStringValue() {
@@ -32,30 +29,7 @@ public class ObjectsTest {
     final String nonNullString = Objects.toString(objectA);
 
     // Then
-    assertThat(nonNullString, is(nonNullString));
-    assertThat(nonNullString, is("notNull"));
-  }
-
-  @Test public void hash_nullValueAsParam_returnNumber() {
-    // Given
-    final Object nullObject = null;
-
-    // When
-    final int hash = Objects.hash(nullObject);
-
-    // Then
-    assertThat(hash, is(notNullValue()));
-  }
-
-  @Test public void hash_ObjectValueAsParam_returnNumber() {
-    // Given
-    final Object objectA = new Object();
-
-    // When
-    final int hash = Objects.hash(objectA);
-
-    // Then
-    assertThat(hash, is(notNullValue()));
+    assertThat(nonNullString).isEqualTo("notNull");
   }
 
   @Test public void equals_nullValueAsFirstParam_returnFalse() {
@@ -64,10 +38,11 @@ public class ObjectsTest {
     final Object objectB = new Object();
 
     // When
+    //noinspection ConstantConditions
     final boolean result = Objects.equals(objectA, objectB);
 
     // Then
-    assertThat(result, is(false));
+    assertThat(result).isFalse();
   }
 
   @Test public void equals_nullValueAsSecondParam_returnFalse() {
@@ -79,7 +54,7 @@ public class ObjectsTest {
     final boolean result = Objects.equals(objectA, objectB);
 
     // Then
-    assertThat(result, is(false));
+    assertThat(result).isFalse();
   }
 
   @Test public void equals_nullValueAsBothParams_returnTrue() {
@@ -88,10 +63,11 @@ public class ObjectsTest {
     final Object objectB = null;
 
     // When
+    //noinspection ConstantConditions
     final boolean result = Objects.equals(objectA, objectB);
 
     // Then
-    assertThat(result, is(true));
+    assertThat(result).isTrue();
   }
 
   @Test public void equals_differentBooleanParams_returnFalse() {
@@ -103,7 +79,7 @@ public class ObjectsTest {
     final boolean result = Objects.equals(paramA, paramB);
 
     // Then
-    assertThat(result, is(false));
+    assertThat(result).isFalse();
   }
 
   @Test public void equals_sameBooleanParams_returnTrue() {
@@ -115,7 +91,7 @@ public class ObjectsTest {
     final boolean result = Objects.equals(paramA, paramB);
 
     // Then
-    assertThat(result, is(true));
+    assertThat(result).isTrue();
   }
 
 }
