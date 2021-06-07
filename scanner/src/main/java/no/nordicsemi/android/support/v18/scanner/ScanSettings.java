@@ -152,32 +152,32 @@ public final class ScanSettings implements Parcelable {
 	private final long powerSaveRestInterval;
 
 	// Bluetooth LE scan mode.
-	private int scanMode;
+	private final int scanMode;
 
 	// Bluetooth LE scan callback type
-	private int callbackType;
+	private final int callbackType;
 
 	// Time of delay for reporting the scan result
-	private long reportDelayMillis;
+	private final long reportDelayMillis;
 
-	private int matchMode;
+	private final int matchMode;
 
-	private int numOfMatchesPerFilter;
+	private final int numOfMatchesPerFilter;
 
-	private boolean useHardwareFilteringIfSupported;
+	private final boolean useHardwareFilteringIfSupported;
 
-	private boolean useHardwareBatchingIfSupported;
+	private final boolean useHardwareBatchingIfSupported;
 
 	private boolean useHardwareCallbackTypesIfSupported;
 
-	private long matchLostDeviceTimeout;
+	private final long matchLostDeviceTimeout;
 
-	private long matchLostTaskInterval;
+	private final long matchLostTaskInterval;
 
 	// Include only legacy advertising results
-	private boolean legacy;
+	private final boolean legacy;
 
-	private int phy;
+	private final int phy;
 
 	public int getScanMode() {
 		return scanMode;
@@ -249,11 +249,13 @@ public final class ScanSettings implements Parcelable {
 	}
 
 	private ScanSettings(final int scanMode, final int callbackType,
-						 final long reportDelayMillis, final int matchMode,
-						 final int numOfMatchesPerFilter, final boolean legacy, final int phy,
-						 final boolean hardwareFiltering, final boolean hardwareBatching,
-						 final boolean hardwareCallbackTypes, final long matchTimeout,
-						 final long taskInterval,
+						 final long reportDelayMillis,
+						 final int matchMode, final int numOfMatchesPerFilter,
+						 final boolean legacy, final int phy,
+						 final boolean hardwareFiltering,
+						 final boolean hardwareBatching,
+						 final boolean hardwareCallbackTypes,
+						 final long matchTimeout, final long taskInterval,
 						 final long powerSaveScanInterval, final long powerSaveRestInterval) {
 		this.scanMode = scanMode;
 		this.callbackType = callbackType;
@@ -281,6 +283,8 @@ public final class ScanSettings implements Parcelable {
 		phy = in.readInt();
 		useHardwareFilteringIfSupported = in.readInt() == 1;
 		useHardwareBatchingIfSupported = in.readInt() == 1;
+		matchLostDeviceTimeout = in.readLong();
+		matchLostTaskInterval = in.readLong();
 		powerSaveScanInterval = in.readLong();
 		powerSaveRestInterval = in.readLong();
 	}
@@ -296,6 +300,8 @@ public final class ScanSettings implements Parcelable {
 		dest.writeInt(phy);
 		dest.writeInt(useHardwareFilteringIfSupported ? 1 : 0);
 		dest.writeInt(useHardwareBatchingIfSupported ? 1 : 0);
+		dest.writeLong(matchLostDeviceTimeout);
+		dest.writeLong(matchLostTaskInterval);
 		dest.writeLong(powerSaveScanInterval);
 		dest.writeLong(powerSaveRestInterval);
 	}

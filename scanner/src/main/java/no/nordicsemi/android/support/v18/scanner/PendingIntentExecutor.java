@@ -27,7 +27,7 @@ import androidx.annotation.Nullable;
 	@Nullable private Context service;
 
     private long lastBatchTimestamp;
-    private long reportDelay;
+    private final long reportDelay;
 
     /**
      * Creates the {@link PendingIntent} executor that will be used from a

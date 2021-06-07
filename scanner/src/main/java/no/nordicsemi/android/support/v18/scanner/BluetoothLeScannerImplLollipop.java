@@ -249,73 +249,63 @@ import androidx.annotation.RequiresPermission;
 
 			@Override
 			public void onScanResult(final int callbackType, final android.bluetooth.le.ScanResult nativeScanResult) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						final BluetoothLeScannerImplLollipop scannerImpl =
-								(BluetoothLeScannerImplLollipop) BluetoothLeScannerCompat.getScanner();
-						final ScanResult result = scannerImpl.fromNativeScanResult(nativeScanResult);
-						handleScanResult(callbackType, result);
-					}
+				handler.post(() -> {
+					final BluetoothLeScannerImplLollipop scannerImpl =
+							(BluetoothLeScannerImplLollipop) BluetoothLeScannerCompat.getScanner();
+					final ScanResult result = scannerImpl.fromNativeScanResult(nativeScanResult);
+					handleScanResult(callbackType, result);
 				});
 			}
 
 			@Override
 			public void onBatchScanResults(final List<android.bluetooth.le.ScanResult> nativeScanResults) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						// On several phones the onBatchScanResults is called twice for every batch.
-						// Skip the second call if came to early.
-						final long now = SystemClock.elapsedRealtime();
-						if (lastBatchTimestamp > now - scanSettings.getReportDelayMillis() + 5) {
-							return;
-						}
-						lastBatchTimestamp = now;
-
-						final BluetoothLeScannerImplLollipop scannerImpl =
-								(BluetoothLeScannerImplLollipop) BluetoothLeScannerCompat.getScanner();
-						final List<ScanResult> results = scannerImpl.fromNativeScanResults(nativeScanResults);
-						handleScanResults(results);
+				handler.post(() -> {
+					// On several phones the onBatchScanResults is called twice for every batch.
+					// Skip the second call if came to early.
+					final long now = SystemClock.elapsedRealtime();
+					if (lastBatchTimestamp > now - scanSettings.getReportDelayMillis() + 5) {
+						return;
 					}
+					lastBatchTimestamp = now;
+
+					final BluetoothLeScannerImplLollipop scannerImpl =
+							(BluetoothLeScannerImplLollipop) BluetoothLeScannerCompat.getScanner();
+					final List<ScanResult> results = scannerImpl.fromNativeScanResults(nativeScanResults);
+					handleScanResults(results);
 				});
 			}
 
 			@Override
 			public void onScanFailed(final int errorCode) {
-				handler.post(new Runnable() {
-					@Override
-					@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-					public void run() {
-						// We were able to determine offloaded batching and filtering before we started scan,
-						// but there is no method checking if callback types FIRST_MATCH and MATCH_LOST
-						// are supported. We get an error here it they are not.
-						if (scanSettings.getUseHardwareCallbackTypesIfSupported()
-								&& scanSettings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
-							// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5 (SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES)
-							// On Pixel 2 with Android 9.0 the errorCode = 4 (SCAN_FAILED_FEATURE_UNSUPPORTED)
+				handler.post(() -> {
+					// We were able to determine offloaded batching and filtering before we started scan,
+					// but there is no method checking if callback types FIRST_MATCH and MATCH_LOST
+					// are supported. We get an error here it they are not.
+					if (scanSettings.getUseHardwareCallbackTypesIfSupported()
+							&& scanSettings.getCallbackType() != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
+						// On Nexus 6 with Android 6.0 (MPA44G, M Pre-release 3) the errorCode = 5 (SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES)
+						// On Pixel 2 with Android 9.0 the errorCode = 4 (SCAN_FAILED_FEATURE_UNSUPPORTED)
 
-							// This feature seems to be not supported on your phone.
-							// Let's try to do pretty much the same in the code.
-							scanSettings.disableUseHardwareCallbackTypes();
+						// This feature seems to be not supported on your phone.
+						// Let's try to do pretty much the same in the code.
+						scanSettings.disableUseHardwareCallbackTypes();
 
-							final BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
-							try {
-								scanner.stopScan(scanCallback);
-							} catch (final Exception e) {
-								// Ignore
-							}
-							try {
-								scanner.startScanInternal(filters, scanSettings, scanCallback, handler);
-							} catch (final Exception e) {
-								// Ignore
-							}
-							return;
+						final BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
+						try {
+							scanner.stopScan(scanCallback);
+						} catch (final Exception e) {
+							// Ignore
 						}
-
-						// else, notify user application
-						handleScanError(errorCode);
+						try {
+							scanner.startScanInternal(filters, scanSettings, scanCallback, handler);
+						} catch (final Exception e) {
+							// Ignore
+						}
+						return;
 					}
+
+					// else, notify user application
+					handleScanError(errorCode);
 				});
 			}
 		};
