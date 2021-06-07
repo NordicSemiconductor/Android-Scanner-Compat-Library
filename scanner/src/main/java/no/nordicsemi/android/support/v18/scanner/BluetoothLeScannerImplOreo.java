@@ -87,7 +87,8 @@ import androidx.annotation.RequiresPermission;
 	/* package */ void startScanInternal(@Nullable final List<ScanFilter> filters,
 										 @Nullable final ScanSettings settings,
 										 @NonNull  final Context context,
-										 @NonNull  final PendingIntent callbackIntent) {
+										 @NonNull  final PendingIntent callbackIntent,
+										 final int requestCode) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
@@ -108,19 +109,20 @@ import androidx.annotation.RequiresPermission;
 		}
 
 		final PendingIntent pendingIntent = createStartingPendingIntent(nonNullFilters,
-				nonNullSettings, context, callbackIntent);
+				nonNullSettings, context, callbackIntent, requestCode);
 		scanner.startScan(nativeFilters, nativeSettings, pendingIntent);
 	}
 
 	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	/* package */ void stopScanInternal(@NonNull final Context context,
-										@NonNull final PendingIntent callbackIntent) {
+										@NonNull final PendingIntent callbackIntent,
+										final int requestCode) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
 			throw new IllegalStateException("BT le scanner not available");
 
-		final PendingIntent pendingIntent = createStoppingPendingIntent(context, callbackIntent);
+		final PendingIntent pendingIntent = createStoppingPendingIntent(context, requestCode);
 		scanner.stopScan(pendingIntent);
 
 		synchronized (wrappers) {
@@ -146,10 +148,8 @@ import androidx.annotation.RequiresPermission;
 	private PendingIntent createStartingPendingIntent(@NonNull final List<ScanFilter> filters,
 													  @NonNull final ScanSettings settings,
 													  @NonNull final Context context,
-													  @NonNull final PendingIntent callbackIntent) {
-		// The PendingIntent ID is derived from the user's callbackIntent.
-		final int id = callbackIntent.hashCode();
-
+													  @NonNull final PendingIntent callbackIntent,
+													  final int requestCode) {
 		// Since Android 8 it has to be an explicit intent
 		final Intent intent = new Intent(context, PendingIntentReceiver.class);
 		intent.setAction(PendingIntentReceiver.ACTION);
@@ -168,7 +168,7 @@ import androidx.annotation.RequiresPermission;
 		intent.putExtra(PendingIntentReceiver.EXTRA_MATCH_MODE, settings.getMatchMode());
 		intent.putExtra(PendingIntentReceiver.EXTRA_NUM_OF_MATCHES, settings.getNumOfMatches());
 
-		return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	/**
@@ -177,19 +177,16 @@ import androidx.annotation.RequiresPermission;
 	 * used to start scanning. Comparing intents is done using {@link Intent#filterEquals(Intent)}.
 	 *
 	 * @return The PendingIntent that is to be used to stop scanning. It is equal to one used to
-	 * start scanning if the callbackIntent is equal to one used to start scanning.
+	 * start scanning if the requestCode is equal to one used to start scanning.
 	 */
 	@NonNull
 	private PendingIntent createStoppingPendingIntent(@NonNull final Context context,
-													  @NonNull final PendingIntent callbackIntent) {
-		// The PendingIntent ID is derived from the user's callbackIntent.
-		final int id = callbackIntent.hashCode();
-
+													  final int requestCode) {
 		// Since Android 8 it has to be an explicit intent
 		final Intent intent = new Intent(context, PendingIntentReceiver.class);
 		intent.setAction(PendingIntentReceiver.ACTION);
 
-		return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	@NonNull

@@ -16,42 +16,36 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static junit.framework.Assert.fail;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-@RunWith(AndroidJUnit4.class) public class ScanSettingsTest {
+import static org.junit.Assert.assertThrows;
 
-  @Test public void testCallbackType() {
-    ScanSettings.Builder builder = new ScanSettings.Builder();
-    builder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES);
-    builder.setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
-    builder.setCallbackType(ScanSettings.CALLBACK_TYPE_MATCH_LOST);
-    builder.setCallbackType(
-        ScanSettings.CALLBACK_TYPE_FIRST_MATCH | ScanSettings.CALLBACK_TYPE_MATCH_LOST);
-    try {
-      builder.setCallbackType(
-          ScanSettings.CALLBACK_TYPE_ALL_MATCHES | ScanSettings.CALLBACK_TYPE_MATCH_LOST);
-      fail("should have thrown IllegalArgumentException!");
-    } catch (IllegalArgumentException e) {
-      // nothing to do
-    }
-    try {
-      builder.setCallbackType(
-          ScanSettings.CALLBACK_TYPE_ALL_MATCHES | ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
-      fail("should have thrown IllegalArgumentException!");
-    } catch (IllegalArgumentException e) {
-      // nothing to do
-    }
-    try {
-      builder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES |
-          ScanSettings.CALLBACK_TYPE_FIRST_MATCH |
-          ScanSettings.CALLBACK_TYPE_MATCH_LOST);
-      fail("should have thrown IllegalArgumentException!");
-    } catch (IllegalArgumentException e) {
-      // nothing to do
-    }
-  }
+@RunWith(AndroidJUnit4.class)
+public class ScanSettingsTest {
+
+	@Test
+	public void testCallbackType() {
+		final ScanSettings.Builder builder = new ScanSettings.Builder();
+		builder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES);
+		builder.setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
+		builder.setCallbackType(ScanSettings.CALLBACK_TYPE_MATCH_LOST);
+		builder.setCallbackType(
+				ScanSettings.CALLBACK_TYPE_FIRST_MATCH | ScanSettings.CALLBACK_TYPE_MATCH_LOST);
+		assertThrows(IllegalArgumentException.class, () ->
+				builder.setCallbackType(
+						ScanSettings.CALLBACK_TYPE_ALL_MATCHES | ScanSettings.CALLBACK_TYPE_MATCH_LOST)
+		);
+		assertThrows(IllegalArgumentException.class, () ->
+			builder.setCallbackType(
+					ScanSettings.CALLBACK_TYPE_ALL_MATCHES | ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
+		);
+		assertThrows(IllegalArgumentException.class, () ->
+			builder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES |
+					ScanSettings.CALLBACK_TYPE_FIRST_MATCH |
+					ScanSettings.CALLBACK_TYPE_MATCH_LOST)
+		);
+	}
 }
