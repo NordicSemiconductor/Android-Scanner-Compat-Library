@@ -95,7 +95,7 @@ import androidx.annotation.RequiresPermission;
 			throw new IllegalStateException("BT le scanner not available");
 
 		final ScanSettings nonNullSettings = settings != null ? settings : new ScanSettings.Builder().build();
-		final List<ScanFilter> nonNullFilters = filters != null ? filters : Collections.<ScanFilter>emptyList();
+		final List<ScanFilter> nonNullFilters = filters != null ? filters : Collections.emptyList();
 
 		final android.bluetooth.le.ScanSettings nativeSettings = toNativeScanSettings(adapter, nonNullSettings, false);
 		List<android.bluetooth.le.ScanFilter> nativeFilters = null;

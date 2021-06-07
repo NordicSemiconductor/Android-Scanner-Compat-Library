@@ -67,6 +67,7 @@ class BluetoothLeUtils {
 		while (it.hasNext()) {
 			final Map.Entry<T, byte[]> entry = it.next();
 			final Object key = entry.getKey();
+			//noinspection SuspiciousMethodCalls
 			buffer.append(key).append("=").append(Arrays.toString(map.get(key)));
 			if (it.hasNext()) {
 				buffer.append(", ");

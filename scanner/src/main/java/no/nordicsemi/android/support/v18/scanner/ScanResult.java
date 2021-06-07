@@ -79,26 +79,25 @@ public final class ScanResult implements Parcelable {
 	static final int ET_CONNECTABLE_MASK = 0x01;
 
 	// Remote Bluetooth device.
-	@SuppressWarnings("NullableProblems")
 	@NonNull
-	private BluetoothDevice device;
+	private final BluetoothDevice device;
 
 	// Scan record, including advertising data and scan response data.
 	@Nullable
 	private ScanRecord scanRecord;
 
 	// Received signal strength.
-	private int rssi;
+	private final int rssi;
 
 	// Device timestamp when the result was last seen.
-	private long timestampNanos;
+	private final long timestampNanos;
 
-	private int eventType;
-	private int primaryPhy;
-	private int secondaryPhy;
-	private int advertisingSid;
-	private int txPower;
-	private int periodicAdvertisingInterval;
+	private final int eventType;
+	private final int primaryPhy;
+	private final int secondaryPhy;
+	private final int advertisingSid;
+	private final int txPower;
+	private final int periodicAdvertisingInterval;
 
 	/**
 	 * Constructs a new ScanResult.
@@ -155,7 +154,18 @@ public final class ScanResult implements Parcelable {
 	}
 
 	private ScanResult(final Parcel in) {
-		readFromParcel(in);
+		device = BluetoothDevice.CREATOR.createFromParcel(in);
+		if (in.readInt() == 1) {
+			scanRecord = ScanRecord.parseFromBytes(in.createByteArray());
+		}
+		rssi = in.readInt();
+		timestampNanos = in.readLong();
+		eventType = in.readInt();
+		primaryPhy = in.readInt();
+		secondaryPhy = in.readInt();
+		advertisingSid = in.readInt();
+		txPower = in.readInt();
+		periodicAdvertisingInterval = in.readInt();
 	}
 
 	@Override
@@ -175,21 +185,6 @@ public final class ScanResult implements Parcelable {
 		dest.writeInt(advertisingSid);
 		dest.writeInt(txPower);
 		dest.writeInt(periodicAdvertisingInterval);
-	}
-
-	private void readFromParcel(final Parcel in) {
-		device = BluetoothDevice.CREATOR.createFromParcel(in);
-		if (in.readInt() == 1) {
-			scanRecord = ScanRecord.parseFromBytes(in.createByteArray());
-		}
-		rssi = in.readInt();
-		timestampNanos = in.readLong();
-		eventType = in.readInt();
-		primaryPhy = in.readInt();
-		secondaryPhy = in.readInt();
-		advertisingSid = in.readInt();
-		txPower = in.readInt();
-		periodicAdvertisingInterval = in.readInt();
 	}
 
 	@Override
