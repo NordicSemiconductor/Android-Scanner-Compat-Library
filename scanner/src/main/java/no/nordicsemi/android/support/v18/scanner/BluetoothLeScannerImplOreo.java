@@ -284,10 +284,10 @@ import androidx.annotation.RequiresPermission;
 									 final boolean offloadedFilteringSupported,
 									 @NonNull final List<ScanFilter> filters,
 									 @NonNull final ScanSettings settings,
-									 @NonNull final PendingIntent callbackIntent) {
+									 @NonNull final PendingIntentExecutor executor) {
 			super(offloadedBatchingSupported, offloadedFilteringSupported, filters, settings,
-					new PendingIntentExecutor(callbackIntent, settings), new Handler());
-			executor = (PendingIntentExecutor) scanCallback;
+					executor, new Handler());
+			this.executor = executor;
 		}
 	}
 }
