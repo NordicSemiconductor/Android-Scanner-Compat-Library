@@ -28,7 +28,7 @@ The compat library may be found on Maven Central repository. Add it to your proj
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.5.0'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.5.1'
 ```
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
@@ -52,6 +52,15 @@ Since version 1.5 you will need to [enable desugaring of Java 8 language feature
 if you have not already done so.(And if you are releasing an Android library, then anyone who uses 
 that library will also have to enable desugaring.) We expect for nearly all Android projects to have 
 already enabled desugaring. But if this causes problems for you, please use version 1.4.5.
+
+## Permissions
+
+Following [this](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner#startScan(android.bluetooth.le.ScanCallback)) link:
+
+> An app must have [ACCESS_COARSE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_COARSE_LOCATION) permission in order to get results. An App targeting Android Q or later must have [ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION) permission in order to get results.
+For apps targeting [Build.VERSION_CODES#R](https://developer.android.com/reference/android/os/Build.VERSION_CODES#R) or lower, this requires the [Manifest.permission#BLUETOOTH_ADMIN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_ADMIN) permission which can be gained with a simple `<uses-permission>` manifest tag.
+For apps targeting [Build.VERSION_CODES#S](https://developer.android.com/reference/android/os/Build.VERSION_CODES#S) or or higher, this requires the [Manifest.permission#BLUETOOTH_SCAN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_SCAN) permission which can be gained with [Activity.requestPermissions(String[], int)](https://developer.android.com/reference/android/app/Activity#requestPermissions(java.lang.String[],%20int)).
+In addition, this requires either the [Manifest.permission#ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION) permission or a strong assertion that you will never derive the physical location of the device. You can make this assertion by declaring `usesPermissionFlags="neverForLocation"` on the relevant `<uses-permission>` manifest tag, but it may restrict the types of Bluetooth devices you can interact with.
 
 ## API
 
