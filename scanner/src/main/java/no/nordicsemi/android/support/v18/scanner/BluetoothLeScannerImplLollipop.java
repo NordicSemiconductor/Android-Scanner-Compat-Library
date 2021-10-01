@@ -34,9 +34,7 @@ import android.os.Handler;
 import android.os.SystemClock;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
@@ -45,7 +43,11 @@ import androidx.annotation.RequiresPermission;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 /* package */ class BluetoothLeScannerImplLollipop extends BluetoothLeScannerCompat {
 
-	@NonNull private final Map<ScanCallback, ScanCallbackWrapperLollipop> wrappers = new HashMap<>();
+	/**
+	 * A set of scan callback wrappers. Each wrapper contains a weak reference to the scan
+	 * callback given by the user.
+	 */
+	@NonNull private final ScanCallbackWrapperSet<ScanCallbackWrapperLollipop> wrappers = new ScanCallbackWrapperSet<>();
 
 	/* package */ BluetoothLeScannerImplLollipop() {}
 
@@ -66,12 +68,13 @@ import androidx.annotation.RequiresPermission;
 		ScanCallbackWrapperLollipop wrapper;
 
 		synchronized (wrappers) {
-			if (wrappers.containsKey(callback)) {
+			if (wrappers.contains(callback)) {
 				throw new IllegalArgumentException("scanner already started with given callback");
 			}
+			final UserScanCallbackWrapper callbackWrapper = new UserScanCallbackWrapper(callback);
 			wrapper = new ScanCallbackWrapperLollipop(offloadedBatchingSupported,
-					offloadedFilteringSupported, filters, settings, callback, handler);
-			wrappers.put(callback, wrapper);
+					offloadedFilteringSupported, filters, settings, callbackWrapper, handler);
+			wrappers.add(wrapper);
 		}
 
 		final android.bluetooth.le.ScanSettings nativeScanSettings = toNativeScanSettings(adapter, settings, false);
