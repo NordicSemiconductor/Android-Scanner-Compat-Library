@@ -33,9 +33,7 @@ import android.os.SystemClock;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,10 +44,10 @@ import androidx.annotation.RequiresPermission;
 /* package */ class BluetoothLeScannerImplJB extends BluetoothLeScannerCompat {
 
 	/**
-	 * A map that stores {@link ScanCallbackWrapper}s for user's {@link ScanCallback}.
-	 * Each wrapper keeps track of found and lost devices and allows to emulate batching.
+	 * A set of scan callback wrappers. Each wrapper contains a weak reference to the scan
+	 * callback given by the user.
 	 */
-	@NonNull private final Map<ScanCallback, ScanCallbackWrapper> wrappers = new HashMap<>();
+	@NonNull private final ScanCallbackWrapperSet<ScanCallbackWrapper> wrappers = new ScanCallbackWrapperSet<>();
 
 	@Nullable private HandlerThread handlerThread;
 	@Nullable private Handler powerSaveHandler;
@@ -94,14 +92,15 @@ import androidx.annotation.RequiresPermission;
 		boolean shouldStart;
 
 		synchronized (wrappers) {
-			if (wrappers.containsKey(callback)) {
+			if (wrappers.contains(callback)) {
 				throw new IllegalArgumentException("scanner already started with given scanCallback");
 			}
+			final UserScanCallbackWrapper callbackWrapper = new UserScanCallbackWrapper(callback);
 			final ScanCallbackWrapper wrapper = new ScanCallbackWrapper(
 					false, false,
-					filters, settings, callback, handler);
+					filters, settings, callbackWrapper, handler);
 			shouldStart = wrappers.isEmpty();
-			wrappers.put(callback, wrapper);
+			wrappers.add(wrapper);
 		}
 
 		if (handlerThread == null) {

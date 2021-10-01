@@ -97,8 +97,13 @@ public class PendingIntentReceiver extends BroadcastReceiver {
 			if (wrapper == null) {
 				// Wrapper has not been created, or was created, but the app was then killed
 				// and must be created again. Some information will be lost (batched devices).
-				wrapper = new BluetoothLeScannerImplOreo.PendingIntentExecutorWrapper(offloadedBatchingSupported,
-						offloadedFilteringSupported, filters, settings, callbackIntent);
+				final PendingIntentExecutor executor = new PendingIntentExecutor(callbackIntent, settings);
+				wrapper = new BluetoothLeScannerImplOreo.PendingIntentExecutorWrapper(
+						offloadedBatchingSupported,
+						offloadedFilteringSupported,
+						filters, settings,
+						executor
+				);
 				scannerImpl.addWrapper(callbackIntent, wrapper);
 			}
 		}
