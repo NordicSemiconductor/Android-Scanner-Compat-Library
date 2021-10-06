@@ -34,7 +34,7 @@ following dependency:
 implementation 'no.nordicsemi.android.support.v18:scanner:{{VERSION}}'
 ```
 
-If you are not targeting API 31 (Android 12), use version 1.5.1.
+Project not targeting API 31 (Android 12) or newer should use version 1.5.1.
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
 
