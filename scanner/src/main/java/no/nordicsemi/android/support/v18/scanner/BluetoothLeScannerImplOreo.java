@@ -22,7 +22,6 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
@@ -32,14 +31,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 
 @TargetApi(Build.VERSION_CODES.O)
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
@@ -83,7 +81,6 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void startScanInternal(@Nullable final List<ScanFilter> filters,
 										 @Nullable final ScanSettings settings,
 										 @NonNull  final Context context,
@@ -113,7 +110,6 @@ import androidx.annotation.RequiresPermission;
 		scanner.startScan(nativeFilters, nativeSettings, pendingIntent);
 	}
 
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	/* package */ void stopScanInternal(@NonNull final Context context,
 										@NonNull final PendingIntent callbackIntent,
 										final int requestCode) {
