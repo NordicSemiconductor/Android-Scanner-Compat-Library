@@ -22,7 +22,6 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
@@ -33,11 +32,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
 
 @SuppressWarnings({"deprecation", "WeakerAccess"})
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -52,7 +50,6 @@ import androidx.annotation.RequiresPermission;
 	/* package */ BluetoothLeScannerImplLollipop() {}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
 										 @NonNull final ScanSettings settings,
 										 @NonNull final ScanCallback callback,
@@ -86,7 +83,6 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void stopScanInternal(@NonNull final ScanCallback callback) {
 		ScanCallbackWrapperLollipop wrapper;
 		synchronized (wrappers) {
@@ -106,12 +102,11 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-		/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
-											 @NonNull final ScanSettings settings,
-											 @NonNull final Context context,
-											 @NonNull final PendingIntent callbackIntent,
-											 final int requestCode) {
+	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
+										 @NonNull final ScanSettings settings,
+										 @NonNull final Context context,
+										 @NonNull final PendingIntent callbackIntent,
+										 final int requestCode) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
@@ -127,10 +122,9 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-		/* package */ void stopScanInternal(@NonNull final Context context,
-											@NonNull final PendingIntent callbackIntent,
-											final int requestCode) {
+	/* package */ void stopScanInternal(@NonNull final Context context,
+										@NonNull final PendingIntent callbackIntent,
+										final int requestCode) {
 		final Intent service = new Intent(context, ScannerService.class);
 		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
 		service.putExtra(ScannerService.EXTRA_REQUEST_CODE, requestCode);
@@ -139,7 +133,6 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(Manifest.permission.BLUETOOTH)
 	public void flushPendingScanResults(@NonNull final ScanCallback callback) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		//noinspection ConstantConditions
