@@ -22,14 +22,19 @@ This is much less battery friendly than when the original method is used, but wo
 a lot of development time if such feature should be implemented anyway. Please read below 
 for more details.
 
+Note, that for unfiltered scans, scanning is stopped on screen off to save power. Scanning is
+resumed when screen is turned on again. To avoid this, use scanning with desired ScanFilter.
+
 ## Usage
 
 The compat library may be found on Maven Central repository. Add it to your project by adding the 
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.5.1'
+implementation 'no.nordicsemi.android.support.v18:scanner:1.6.0'
 ```
+
+Project not targeting API 31 (Android 12) or newer should use version 1.5.1.
 
 Projects not migrated to Android Jetpack should use version 1.3.1, which is feature-equal to 1.4.0.
 
@@ -57,10 +62,21 @@ already enabled desugaring. But if this causes problems for you, please use vers
 
 Following [this](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner#startScan(android.bluetooth.le.ScanCallback)) link:
 
-> An app must have [ACCESS_COARSE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_COARSE_LOCATION) permission in order to get results. An App targeting Android Q or later must have [ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION) permission in order to get results.
-For apps targeting [Build.VERSION_CODES#R](https://developer.android.com/reference/android/os/Build.VERSION_CODES#R) or lower, this requires the [Manifest.permission#BLUETOOTH_ADMIN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_ADMIN) permission which can be gained with a simple `<uses-permission>` manifest tag.
-For apps targeting [Build.VERSION_CODES#S](https://developer.android.com/reference/android/os/Build.VERSION_CODES#S) or or higher, this requires the [Manifest.permission#BLUETOOTH_SCAN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_SCAN) permission which can be gained with [Activity.requestPermissions(String[], int)](https://developer.android.com/reference/android/app/Activity#requestPermissions(java.lang.String[],%20int)).
-In addition, this requires either the [Manifest.permission#ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION) permission or a strong assertion that you will never derive the physical location of the device. You can make this assertion by declaring `usesPermissionFlags="neverForLocation"` on the relevant `<uses-permission>` manifest tag, but it may restrict the types of Bluetooth devices you can interact with.
+> An app must have [ACCESS_COARSE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_COARSE_LOCATION)
+permission in order to get results. An App targeting Android Q or later must have
+[ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION)
+permission in order to get results.
+For apps targeting [Build.VERSION_CODES#R](https://developer.android.com/reference/android/os/Build.VERSION_CODES#R)
+or lower, this requires the [Manifest.permission#BLUETOOTH_ADMIN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_ADMIN)
+permission which can be gained with a simple `<uses-permission>` manifest tag.
+For apps targeting [Build.VERSION_CODES#S](https://developer.android.com/reference/android/os/Build.VERSION_CODES#S)
+or or higher, this requires the [Manifest.permission#BLUETOOTH_SCAN](https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_SCAN)
+permission which can be gained with
+[Activity.requestPermissions(String[], int)](https://developer.android.com/reference/android/app/Activity#requestPermissions(java.lang.String[],%20int)).
+In addition, this requires either the [Manifest.permission#ACCESS_FINE_LOCATION](https://developer.android.com/reference/android/Manifest.permission#ACCESS_FINE_LOCATION)
+permission or a strong assertion that you will never derive the physical location of the device.
+You can make this assertion by declaring `usesPermissionFlags="neverForLocation"` on the relevant
+`<uses-permission>` manifest tag, but it may restrict the types of Bluetooth devices you can interact with.
 
 ## API
 
@@ -178,7 +194,7 @@ the application. No changes are required to make it work.
 To use this feature:
 
 ```java
-    Intent intent = new Intent(context, MyReceiver.class); // explicite intent 
+    Intent intent = new Intent(context, MyReceiver.class); // explicit intent
 	intent.setAction("com.example.ACTION_FOUND");
 	intent.putExtra("some.extra", value); // optional
 	PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -193,7 +209,7 @@ To use this feature:
 	scanner.startScan(filters, settings, context, pendingIntent, requestCode);
 ```
 
-Add your `MyRecever` to *AndroidManifest*, as the application context might have been released 
+Add your `MyReceiver` to *AndroidManifest*, as the application context might have been released
 and all broadcast receivers registered to it together with it.
 
 To stop scanning call:
@@ -226,6 +242,9 @@ should be used, together with report delay set and filters used.
 Background scanning on Android 4.3 and 4.4.x will use a lot of power, as all those properties 
 will have to be emulated. It is recommended to scan in background only on Lollipop or newer, or
 even Oreo or newer devices and giving the user an option to disable this feature.
+
+Note, that for unfiltered scans, scanning is stopped on screen off to save power. Scanning is
+resumed when screen is turned on again. To avoid this, use scanning with desired ScanFilter.
 
 ## License
 
