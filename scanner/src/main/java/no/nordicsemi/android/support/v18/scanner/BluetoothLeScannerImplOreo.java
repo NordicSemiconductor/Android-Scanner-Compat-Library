@@ -168,8 +168,11 @@ import androidx.annotation.RequiresPermission;
 		intent.putExtra(PendingIntentReceiver.EXTRA_MATCH_MODE, settings.getMatchMode());
 		intent.putExtra(PendingIntentReceiver.EXTRA_NUM_OF_MATCHES, settings.getNumOfMatches());
 
-		return PendingIntent.getBroadcast(context, requestCode, intent,
-				PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		// Mutable flag has to be set explicitly on Android 12+. Before PendingIntent was mutable by default.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+			flags |= PendingIntent.FLAG_MUTABLE;
+		return PendingIntent.getBroadcast(context, requestCode, intent, flags);
 	}
 
 	/**
@@ -187,8 +190,12 @@ import androidx.annotation.RequiresPermission;
 		final Intent intent = new Intent(context, PendingIntentReceiver.class);
 		intent.setAction(PendingIntentReceiver.ACTION);
 
-		return PendingIntent.getBroadcast(context, requestCode, intent,
-				PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		// Immutable flag has to be set explicitly on Android 12+, but can be set from Android 6.
+		// Stopping scanning does not require the PendingIntent to be mutable.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+			flags |= PendingIntent.FLAG_IMMUTABLE;
+		return PendingIntent.getBroadcast(context, requestCode, intent, flags);
 	}
 
 	@NonNull
