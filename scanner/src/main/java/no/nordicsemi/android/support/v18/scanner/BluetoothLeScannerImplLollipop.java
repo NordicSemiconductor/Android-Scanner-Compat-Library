@@ -107,11 +107,11 @@ import androidx.annotation.RequiresPermission;
 
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-		/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
-											 @NonNull final ScanSettings settings,
-											 @NonNull final Context context,
-											 @NonNull final PendingIntent callbackIntent,
-											 final int requestCode) {
+	/* package */ void startScanInternal(@NonNull final List<ScanFilter> filters,
+										 @NonNull final ScanSettings settings,
+										 @NonNull final Context context,
+										 @NonNull final PendingIntent callbackIntent,
+										 final int requestCode) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 		if (scanner == null)
@@ -128,9 +128,9 @@ import androidx.annotation.RequiresPermission;
 
 	@Override
 	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
-		/* package */ void stopScanInternal(@NonNull final Context context,
-											@NonNull final PendingIntent callbackIntent,
-											final int requestCode) {
+	/* package */ void stopScanInternal(@NonNull final Context context,
+										@NonNull final PendingIntent callbackIntent,
+										final int requestCode) {
 		final Intent service = new Intent(context, ScannerService.class);
 		service.putExtra(ScannerService.EXTRA_PENDING_INTENT, callbackIntent);
 		service.putExtra(ScannerService.EXTRA_REQUEST_CODE, requestCode);
