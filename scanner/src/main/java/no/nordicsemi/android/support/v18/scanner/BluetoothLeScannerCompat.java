@@ -89,6 +89,12 @@ public abstract class BluetoothLeScannerCompat {
 
 	private static BluetoothLeScannerCompat instance;
 
+	private static int versionSdkInt = Build.VERSION.SDK_INT;
+
+	public static void setScannerApi(int versionSdkInt) {
+        BluetoothLeScannerCompat.versionSdkInt = versionSdkInt;
+    }
+
 	/**
 	 * Returns the scanner compat object
 	 * @return scanner implementation
@@ -97,11 +103,11 @@ public abstract class BluetoothLeScannerCompat {
 	public synchronized static BluetoothLeScannerCompat getScanner() {
 		if (instance != null)
 			return instance;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+		if (versionSdkInt >= Build.VERSION_CODES.O)
 			return instance = new BluetoothLeScannerImplOreo();
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+		if (versionSdkInt >= Build.VERSION_CODES.M)
 			return instance = new BluetoothLeScannerImplMarshmallow();
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+		if (versionSdkInt >= Build.VERSION_CODES.LOLLIPOP)
 			return instance = new BluetoothLeScannerImplLollipop();
 		return instance = new BluetoothLeScannerImplJB();
 	}
