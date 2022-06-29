@@ -22,7 +22,6 @@
 
 package no.nordicsemi.android.support.v18.scanner;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
@@ -32,14 +31,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 
 @TargetApi(Build.VERSION_CODES.O)
 /* package */ class BluetoothLeScannerImplOreo extends BluetoothLeScannerImplMarshmallow {
@@ -83,7 +81,6 @@ import androidx.annotation.RequiresPermission;
 	}
 
 	@Override
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ void startScanInternal(@Nullable final List<ScanFilter> filters,
 										 @Nullable final ScanSettings settings,
 										 @NonNull  final Context context,
@@ -113,7 +110,6 @@ import androidx.annotation.RequiresPermission;
 		scanner.startScan(nativeFilters, nativeSettings, pendingIntent);
 	}
 
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	/* package */ void stopScanInternal(@NonNull final Context context,
 										@NonNull final PendingIntent callbackIntent,
 										final int requestCode) {
@@ -168,7 +164,11 @@ import androidx.annotation.RequiresPermission;
 		intent.putExtra(PendingIntentReceiver.EXTRA_MATCH_MODE, settings.getMatchMode());
 		intent.putExtra(PendingIntentReceiver.EXTRA_NUM_OF_MATCHES, settings.getNumOfMatches());
 
-		return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		// Mutable flag has to be set explicitly on Android 12+. Before PendingIntent was mutable by default.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+			flags |= PendingIntent.FLAG_MUTABLE;
+		return PendingIntent.getBroadcast(context, requestCode, intent, flags);
 	}
 
 	/**
@@ -186,7 +186,12 @@ import androidx.annotation.RequiresPermission;
 		final Intent intent = new Intent(context, PendingIntentReceiver.class);
 		intent.setAction(PendingIntentReceiver.ACTION);
 
-		return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		// Immutable flag has to be set explicitly on Android 12+, but can be set from Android 6.
+		// Stopping scanning does not require the PendingIntent to be mutable.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+			flags |= PendingIntent.FLAG_IMMUTABLE;
+		return PendingIntent.getBroadcast(context, requestCode, intent, flags);
 	}
 
 	@NonNull

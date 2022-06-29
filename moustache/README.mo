@@ -31,7 +31,7 @@ The compat library may be found on Maven Central repository. Add it to your proj
 following dependency:
 
 ```Groovy
-implementation 'no.nordicsemi.android.support.v18:scanner:1.6.0'
+implementation 'no.nordicsemi.android.support.v18:scanner:{{VERSION}}'
 ```
 
 Project not targeting API 31 (Android 12) or newer should use version 1.5.1.

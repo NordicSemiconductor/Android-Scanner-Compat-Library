@@ -3,16 +3,31 @@
 	xmlns:tools="http://schemas.android.com/tools">
 
 	<!--
-	Bluetooth permissions require to check Bluetooth Adapter state
-	and starting LE scan.
+	 Bluetooth permissions require to check Bluetooth Adapter state
+	 and starting LE scan before Android S (API 31).
 	-->
-	<uses-permission android:name="android.permission.BLUETOOTH"/>
-	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+	<uses-permission
+		android:name="android.permission.BLUETOOTH"
+		android:maxSdkVersion="30"/>
+	<uses-permission
+		android:name="android.permission.BLUETOOTH_ADMIN"
+		android:maxSdkVersion="30"/>
 	<!--
-	Location permission is required on Android 6+.
-	Since Android 10 the FINE LOCATION will be required.
+	 Bluetooth Scan permission is required from Android S onwards.
+
+	 Note: This permission may be used with "usesPermissionFlag". If you don't need location,
+	       declare this permission with this flag set to "neverForLocation".
 	-->
+	<uses-permission
+		android:name="android.permission.BLUETOOTH_SCAN" />
+
+	<!--
+	 Location permission has been removed from here, as it may not be required for
+	 Android 12 onwards. It is required on Android 6-11 when scanning for Bluetooth LE devices.
+
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+	-->
 
 	<application>
 		<!--
