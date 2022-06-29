@@ -19,15 +19,16 @@
 	       declare this permission with this flag set to "neverForLocation".
 	-->
 	<uses-permission
-		android:name="android.permission.BLUETOOTH_SCAN" />
+		android:name="android.permission.BLUETOOTH_SCAN"
+		tools:targetApi="s" />
 
-	<!--
-	 Location permission has been removed from here, as it may not be required for
-	 Android 12 onwards. It is required on Android 6-11 when scanning for Bluetooth LE devices.
+	<!-- Coarse and fine location, mandatory since Android 6.0 to scan for Bluetooth Low Energy
+	peripherals, not needed starting from Android 12.0. -->
 
-	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-	-->
+	<uses-permission-sdk-23 android:maxSdkVersion="30"
+        android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission-sdk-23 android:maxSdkVersion="30"
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 	<application>
 		<!--
