@@ -1,13 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 31
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 29
+        targetSdkVersion 31
         versionCode 21
-        versionName VERSION_NAME
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,22 +27,30 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.annotation:annotation:1.3.0'
 
-    androidTestImplementation 'androidx.test:runner:1.3.0-alpha02'
-    androidTestImplementation 'androidx.test:rules:1.3.0-alpha02'
-    androidTestImplementation 'org.hamcrest:hamcrest-library:2.1'
-    androidTestImplementation ('junit:junit:4.13-beta-3') {
-        exclude module: 'hamcrest-core'
-    }
+    // Core library
+    androidTestImplementation 'androidx.test:core:1.4.0'
 
-    testImplementation 'org.hamcrest:hamcrest-library:2.1'
-    testImplementation ('junit:junit:4.13-beta-3') {
-        exclude module: 'hamcrest-core'
-    }
-    testImplementation "org.mockito:mockito-core:2.18.0"
-    testImplementation "org.powermock:powermock-module-junit4:1.7.4"
-    testImplementation "org.powermock:powermock-api-mockito:1.7.4"
+    // AndroidJUnitRunner
+    androidTestImplementation 'androidx.test:runner:1.4.0'
+
+    // Assertions & AndroidJUnit4
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+
+    // Truth for Unit Testing
+    androidTestImplementation "com.google.truth:truth:1.1.3"
+    testImplementation "com.google.truth:truth:1.1.3"
 }
 
-//apply from: rootProject.file('gradle/gradle-bintray-push.gradle')
+// === Maven Central configuration ===
+// The following file exists only when Android Scanner Compat Library project is opened, but not
+// when the module is loaded to a different project.
+if (rootProject.file('gradle/publish-module.gradle').exists()) {
+    ext {
+        POM_ARTIFACT_ID = 'scanner'
+        POM_NAME = 'Android Bluetooth LE Scanner Compat library'
+        POM_PACKAGING = 'aar'
+    }
+    apply from: rootProject.file('gradle/publish-module.gradle')
+}

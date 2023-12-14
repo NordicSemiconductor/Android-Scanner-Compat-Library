@@ -30,6 +30,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,10 +41,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 
 /**
  * This class provides methods to perform scan related operations for Bluetooth LE devices. An
@@ -63,7 +62,7 @@ import androidx.annotation.RequiresPermission;
  *
  * @see ScanFilter
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class BluetoothLeScannerCompat {
 
 	/**
@@ -111,43 +110,58 @@ public abstract class BluetoothLeScannerCompat {
 
 	/**
 	 * Start Bluetooth LE scan with default parameters and no filters. The scan results will be
-	 * delivered through {@code callback}.
+	 * delivered through {@code callback}. For unfiltered scans, scanning is stopped on screen
+	 * off to save power. Scanning is resumed when screen is turned on again. To avoid this, use
+	 * {@link #startScan(List, ScanSettings, ScanCallback)} with desired {@link ScanFilter}.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
-	 * in order to get results.
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 * In addition, this requires either the {@link Manifest.permission#ACCESS_FINE_LOCATION}
+	 * permission or a strong assertion that you will never derive the physical location of the device.
+	 * You can make this assertion by declaring {@code usesPermissionFlags="neverForLocation"}
+	 * on the relevant {@code <uses-permission>} manifest tag, but it may restrict the types of
+	 * Bluetooth devices you can interact with.
 	 *
 	 * @param callback Callback used to deliver scan results.
 	 * @throws IllegalArgumentException If {@code callback} is null.
 	 */
-	@SuppressWarnings("WeakerAccess")
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public final void startScan(@NonNull final ScanCallback callback) {
 		//noinspection ConstantConditions
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(Collections.<ScanFilter>emptyList(), new ScanSettings.Builder().build(),
+		startScanInternal(Collections.emptyList(), new ScanSettings.Builder().build(),
 				callback, handler);
 	}
 
 	/**
 	 * Start Bluetooth LE scan. The scan results will be delivered through {@code callback}.
+	 * For unfiltered scans, scanning is stopped on screen off to save power. Scanning is
+	 * resumed when screen is turned on again. To avoid this, do filtered scanning by
+	 * using proper {@link ScanFilter}.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
-	 * in order to get results.
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 * In addition, this requires either the {@link Manifest.permission#ACCESS_FINE_LOCATION}
+	 * permission or a strong assertion that you will never derive the physical location of the device.
+	 * You can make this assertion by declaring {@code usesPermissionFlags="neverForLocation"}
+	 * on the relevant {@code <uses-permission>} manifest tag, but it may restrict the types of
+	 * Bluetooth devices you can interact with.
 	 *
 	 * @param filters {@link ScanFilter}s for finding exact BLE devices.
 	 * @param settings Optional settings for the scan.
 	 * @param callback Callback used to deliver scan results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
-	@SuppressWarnings("unused")
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public final void startScan(@Nullable final List<ScanFilter> filters,
 								@Nullable final ScanSettings settings,
 								@NonNull  final ScanCallback callback) {
@@ -156,18 +170,28 @@ public abstract class BluetoothLeScannerCompat {
 			throw new IllegalArgumentException("callback is null");
 		}
 		final Handler handler = new Handler(Looper.getMainLooper());
-		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+		startScanInternal(filters != null ? filters : Collections.emptyList(),
 				settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler);
 	}
 
 	/**
 	 * Start Bluetooth LE scan. The scan results will be delivered through {@code callback}.
+	 * For unfiltered scans, scanning is stopped on screen off to save power. Scanning is
+	 * resumed when screen is turned on again. To avoid this, do filtered scanning by
+	 * using proper {@link ScanFilter}.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
-	 * in order to get results.
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 * In addition, this requires either the {@link Manifest.permission#ACCESS_FINE_LOCATION}
+	 * permission or a strong assertion that you will never derive the physical location of the device.
+	 * You can make this assertion by declaring {@code usesPermissionFlags="neverForLocation"}
+	 * on the relevant {@code <uses-permission>} manifest tag, but it may restrict the types of
+	 * Bluetooth devices you can interact with.
 	 *
 	 * @param filters {@link ScanFilter}s for finding exact BLE devices.
 	 * @param settings Optional settings for the scan.
@@ -175,8 +199,6 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param handler  Optional handler used to deliver results.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
 	 */
-	@SuppressWarnings("unused")
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public final void startScan(@Nullable final List<ScanFilter> filters,
 								@Nullable final ScanSettings settings,
 								@NonNull  final ScanCallback callback,
@@ -185,7 +207,7 @@ public abstract class BluetoothLeScannerCompat {
 		if (callback == null) {
 			throw new IllegalArgumentException("callback is null");
 		}
-		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
+		startScanInternal(filters != null ? filters : Collections.emptyList(),
 				settings != null ? settings : new ScanSettings.Builder().build(),
 				callback, handler != null ? handler : new Handler(Looper.getMainLooper()));
 	}
@@ -193,11 +215,15 @@ public abstract class BluetoothLeScannerCompat {
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
 	 *
 	 * @param callback The callback used to start scanning.
 	 */
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	public final void stopScan(@NonNull final ScanCallback callback) {
 		//noinspection ConstantConditions
 		if (callback == null) {
@@ -214,7 +240,6 @@ public abstract class BluetoothLeScannerCompat {
 	 * @param callback Callback used to deliver scan results.
 	 * @param handler  Handler used to deliver results.
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ abstract void startScanInternal(@NonNull List<ScanFilter> filters,
 												  @NonNull ScanSettings settings,
 												  @NonNull ScanCallback callback,
@@ -225,13 +250,18 @@ public abstract class BluetoothLeScannerCompat {
 	 *
 	 * @param callback The callback used to start scanning.
 	 */
-	@RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
 	/* package */ abstract void stopScanInternal(@NonNull ScanCallback callback);
 
 	/**
 	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
-	 * via the PendingIntent. On platforms before Oreo this will start {@link ScannerService}
-	 * which will scan in background using given settings.
+	 * via the PendingIntent. Use this method of scanning if your process is not always running
+	 * and it should be started when scan results are available. On platforms before Oreo this
+	 * will start {@link ScannerService} which will scan in background using given settings.
+	 * <p>
+	 * Starting from Android Scanner Compat Library version 1.4.5, to start and stop a scan with
+	 * Pending Intent a request code needs to he given. The code for stopping the scan must
+	 * be the same as one used to start the scan. It can be the same request code that was
+	 * used to create he Pending Intent.
 	 * <p>
 	 * This method of scanning is intended to work in background. Long running scanning may
 	 * consume a lot of battery, so it is recommended to use low power mode in settings,
@@ -242,50 +272,117 @@ public abstract class BluetoothLeScannerCompat {
 	 * A {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
 	 * whether this feature is used or not.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
-	 * An app must hold
-	 * {@link Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION} permission
-	 * in order to get results.
+	 * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
+	 * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
+	 * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
+	 * <p>
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 * In addition, this requires either the {@link Manifest.permission#ACCESS_FINE_LOCATION}
+	 * permission or a strong assertion that you will never derive the physical location of the device.
+	 * You can make this assertion by declaring {@code usesPermissionFlags="neverForLocation"}
+	 * on the relevant {@code <uses-permission>} manifest tag, but it may restrict the types of
+	 * Bluetooth devices you can interact with.
+	 *
+	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
+	 * @param settings       Optional settings for the scan.
+	 * @param context        Context used to start {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent to deliver the result to.
+	 * @param requestCode    The request code used to create the Pending Intent.
+	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+	 * @since 1.4.5
+	 */
+	public final void startScan(@Nullable final List<ScanFilter> filters,
+								@Nullable final ScanSettings settings,
+								@NonNull  final Context context,
+								@NonNull  final PendingIntent callbackIntent,
+								final int requestCode) {
+		//noinspection ConstantConditions
+		if (callbackIntent == null) {
+			throw new IllegalArgumentException("callbackIntent is null");
+		}
+		//noinspection ConstantConditions
+		if (context == null) {
+			throw new IllegalArgumentException("context is null");
+		}
+		startScanInternal(filters != null ? filters : Collections.emptyList(),
+				settings != null ? settings : new ScanSettings.Builder().build(),
+				context, callbackIntent, requestCode);
+	}
+
+	/**
+	 * Start Bluetooth LE scan using a {@link PendingIntent}. The scan results will be delivered
+	 * via the PendingIntent. Use this method of scanning if your process is not always running
+	 * and it should be started when scan results are available. On platforms before Oreo this
+	 * will start {@link ScannerService} which will scan in background using given settings.
+	 * <p>
+	 * Starting from Android Scanner Compat Library version 1.4.5, to start and stop a scan with
+	 * Pending Intent a request code needs to he given. The code for stopping the scan must
+	 * be the same as one used to start the scan. It can be the same request code that was
+	 * used to create he Pending Intent.
+	 * <p>
+	 * This method of scanning is intended to work in background. Long running scanning may
+	 * consume a lot of battery, so it is recommended to use low power mode in settings,
+	 * offloaded filtering and batching. However, the library may emulate batching, filtering or
+	 * callback types {@link ScanSettings#CALLBACK_TYPE_FIRST_MATCH} and
+	 * {@link ScanSettings#CALLBACK_TYPE_MATCH_LOST} if they are not supported.
+	 * <p>
+	 * A {@link PendingIntentReceiver} and {@link ScannerService} will be added to AndroidManifest
+	 * whether this feature is used or not.
 	 * <p>
 	 * When the PendingIntent is delivered, the Intent passed to the receiver or activity will
 	 * contain one or more of the extras {@link #EXTRA_CALLBACK_TYPE}, {@link #EXTRA_ERROR_CODE} and
 	 * {@link #EXTRA_LIST_SCAN_RESULT} to indicate the result of the scan.
+	 * <p>
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 * In addition, this requires either the {@link Manifest.permission#ACCESS_FINE_LOCATION}
+	 * permission or a strong assertion that you will never derive the physical location of the device.
+	 * You can make this assertion by declaring {@code usesPermissionFlags="neverForLocation"}
+	 * on the relevant {@code <uses-permission>} manifest tag, but it may restrict the types of
+	 * Bluetooth devices you can interact with.
 	 *
 	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
 	 * @param settings       Optional settings for the scan.
 	 * @param context        Context used to start {@link ScannerService}.
 	 * @param callbackIntent The PendingIntent to deliver the result to.
 	 * @throws IllegalArgumentException If {@code settings} or {@code callback} is null.
+	 * @see #startScan(List, ScanSettings, Context, PendingIntent, int)
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public final void startScan(@Nullable final List<ScanFilter> filters,
 								@Nullable final ScanSettings settings,
 								@NonNull  final Context context,
 								@NonNull  final PendingIntent callbackIntent) {
-		//noinspection ConstantConditions
-		if (callbackIntent == null) {
-			throw new IllegalArgumentException("callbackIntent is null");
-		}
-		//noinspection ConstantConditions
-		if (context == null) {
-			throw new IllegalArgumentException("context is null");
-		}
-		startScanInternal(filters != null ? filters : Collections.<ScanFilter>emptyList(),
-				settings != null ? settings : new ScanSettings.Builder().build(),
-				context, callbackIntent);
+		startScan(filters, settings, context, callbackIntent, 0);
 	}
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
 	 * <p>
-	 * Requires {@link Manifest.permission#BLUETOOTH_ADMIN} permission.
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
 	 *
 	 * @param context        Context used to stop {@link ScannerService}.
 	 * @param callbackIntent The PendingIntent that was used to start the scan.
+	 * @param requestCode    The request code used to create the Pending Intent. It must be the same
+	 *                       as one used to start scan.
+	 * @since 1.4.5
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	public final void stopScan(@NonNull final Context context,
-							   @NonNull final PendingIntent callbackIntent) {
+							   @NonNull final PendingIntent callbackIntent,
+							   final int requestCode) {
 		//noinspection ConstantConditions
 		if (callbackIntent == null) {
 			throw new IllegalArgumentException("callbackIntent is null");
@@ -294,43 +391,73 @@ public abstract class BluetoothLeScannerCompat {
 		if (context == null) {
 			throw new IllegalArgumentException("context is null");
 		}
-		stopScanInternal(context, callbackIntent);
+		stopScanInternal(context, callbackIntent, requestCode);
 	}
 
 	/**
-	 * Starts Bluetooth LE scan using PendingIntent.
+	 * Stops an ongoing Bluetooth LE scan. If the scan was started using
+	 * {@link #startScan(List, ScanSettings, Context, PendingIntent, int)}, use
+	 * {@link #stopScan(Context, PendingIntent, int)} instead.
+	 * <p>
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
+	 *
+	 * @param context        Context used to stop {@link ScannerService}.
+	 * @param callbackIntent The PendingIntent that was used to start the scan.
+	 * @see #stopScan(Context, PendingIntent, int)
+	 */
+	public final void stopScan(@NonNull final Context context,
+							   @NonNull final PendingIntent callbackIntent) {
+		stopScanInternal(context, callbackIntent, 0);
+	}
+
+	/**
+	 * Starts Bluetooth LE scan using {@link PendingIntent}.
 	 * Its implementation depends on the Android version.
 	 *
 	 * @param filters        {@link ScanFilter}s for finding exact BLE devices.
 	 * @param settings       Settings for the scan.
 	 * @param context        Context used to start {@link ScannerService}.
 	 * @param callbackIntent The PendingIntent to deliver the result to.
+	 * @param requestCode    The PendingIntent request code.
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ abstract void startScanInternal(@NonNull List<ScanFilter> filters,
 												  @NonNull ScanSettings settings,
 												  @NonNull Context context,
-												  @NonNull PendingIntent callbackIntent);
+												  @NonNull PendingIntent callbackIntent,
+												  final int requestCode);
 
 	/**
 	 * Stops an ongoing Bluetooth LE scan.
 	 *
 	 * @param context        Context used to stop {@link ScannerService}.
 	 * @param callbackIntent The PendingIntent that was used to start the scan.
+	 * @param requestCode    The PendingIntent request code. It must be the same that used for
+	 *                       starting scan.
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
 	/* package */ abstract void stopScanInternal(@NonNull Context context,
-												 @NonNull PendingIntent callbackIntent);
+												 @NonNull PendingIntent callbackIntent,
+												 final int requestCode);
 
 	/**
 	 * Flush pending batch scan results stored in Bluetooth controller. This will return Bluetooth
 	 * LE scan results batched on Bluetooth controller. Returns immediately, batch scan results data
 	 * will be delivered through the {@code callback}.
+	 * <p>
+	 * For apps targeting {@link Build.VERSION_CODES#R} or lower, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_ADMIN} permission which can be gained with a simple
+	 * {@code <uses-permission>} manifest tag.
+	 * For apps targeting {@link Build.VERSION_CODES#S} or or higher, this requires the
+	 * {@link Manifest.permission#BLUETOOTH_SCAN} permission which can be gained with
+	 * {@link android.app.Activity#requestPermissions(String[], int)}.
 	 *
 	 * @param callback Callback of the Bluetooth LE Scan, it has to be the same instance as the one
 	 *            used to start scan.
 	 */
-	@SuppressWarnings("unused")
 	public abstract void flushPendingScanResults(@NonNull ScanCallback callback);
 
 	/* package */ static class ScanCallbackWrapper {
@@ -354,17 +481,6 @@ public abstract class BluetoothLeScannerCompat {
 		/** A collection of scan result of devices in range. */
 		@NonNull private final Map<String, ScanResult> devicesInRange = new HashMap<>();
 
-		@NonNull
-		private final Runnable flushPendingScanResultsTask = new Runnable() {
-			@Override
-			public void run() {
-				if (!scanningStopped) {
-					flushPendingScanResults();
-					handler.postDelayed(this, scanSettings.getReportDelayMillis());
-				}
-			}
-		};
-
 		/** A task, called periodically, that notifies about match lost. */
 		@NonNull
 		private final Runnable matchLostNotifierTask = new Runnable() {
@@ -378,12 +494,7 @@ public abstract class BluetoothLeScannerCompat {
 						final ScanResult result = iterator.next();
 						if (result.getTimestampNanos() < now - scanSettings.getMatchLostDeviceTimeout()) {
 							iterator.remove();
-							handler.post(new Runnable() {
-								@Override
-								public void run() {
-									scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, result);
-								}
-							});
+							handler.post(() -> scanCallback.onScanResult(ScanSettings.CALLBACK_TYPE_MATCH_LOST, result));
 						}
 					}
 
@@ -418,6 +529,15 @@ public abstract class BluetoothLeScannerCompat {
 			final long delay = settings.getReportDelayMillis();
 			emulateBatching = delay > 0 && (!offloadedBatchingSupported || !settings.getUseHardwareBatchingIfSupported());
 			if (emulateBatching) {
+				final Runnable flushPendingScanResultsTask = new Runnable() {
+					@Override
+					public void run() {
+						if (!scanningStopped) {
+							flushPendingScanResults();
+							handler.postDelayed(this, scanSettings.getReportDelayMillis());
+						}
+					}
+				};
 				handler.postDelayed(flushPendingScanResultsTask, delay);
 			}
 		}
