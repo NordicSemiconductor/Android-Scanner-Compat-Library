@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 31
+    compileSdk 31
 
     defaultConfig {
         minSdkVersion 18
@@ -18,6 +18,11 @@ android {
         debug {
             testCoverageEnabled true
         }
+    }
+
+    /** Stops "DuplicateRelativeFileException: More than one file was found with OS independent path 'README.txt'" issue **/
+    packagingOptions {
+        exclude 'README.txt'
     }
 }
 

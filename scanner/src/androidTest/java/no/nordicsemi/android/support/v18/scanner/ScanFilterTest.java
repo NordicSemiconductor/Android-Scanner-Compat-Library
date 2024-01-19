@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import static com.google.common.truth.Truth.assertThat;
 
 @RunWith(AndroidJUnit4.class)
@@ -117,6 +116,21 @@ public class ScanFilterTest {
 		assertThat(filter.matches(scanResult)).isTrue();
 		filter = filterBuilder.setServiceData(serviceDataUuid, nonMatchData).build();
 		assertThat(filter.matches(scanResult)).isFalse();
+
+		filter = filterBuilder.setServiceData(
+				ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+				ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"),
+				setServiceData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), nonMatchData, mask).build();
+		assertThat(filter.matches(scanResult)).isTrue();
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), nonMatchData).build();
+		assertThat(filter.matches(scanResult)).isFalse();
+
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"), ParcelUuid.fromString("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), setServiceData).build();
+		assertThat(filter.matches(scanResult)).isFalse();
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("75837467-2222-3333-4444-193749571524"), ParcelUuid.fromString("00000000-0000-0000-0000-000000000000"), setServiceData).build();
+		assertThat(filter.matches(scanResult)).isTrue();
 	}
 
 	@Test
@@ -171,13 +185,28 @@ public class ScanFilterTest {
 		final ParcelUuid serviceDataUuid = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
 		filter = filterBuilder.setServiceData(serviceDataUuid, serviceData).build();
 		testReadWriteParcelForFilter(filter);
+
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+				ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), serviceData).build();
+		testReadWriteParcelForFilter(filter);
+
 		filter = filterBuilder.setServiceData(serviceDataUuid, new byte[0]).build();
 		testReadWriteParcelForFilter(filter);
+
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+				ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), new byte[0]).build();
+		testReadWriteParcelForFilter(filter);
+
 		final byte[] serviceDataMask = new byte[]{
 				(byte) 0xFF, (byte) 0xFF
 		};
 		filter = filterBuilder.setServiceData(serviceDataUuid, serviceData, serviceDataMask).build();
 		testReadWriteParcelForFilter(filter);
+
+		filter = filterBuilder.setServiceData(ParcelUuid.fromString("0000110C-0000-1000-8000-00805F9B34FB"),
+				ParcelUuid.fromString("FFFFFFF0-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), serviceData, serviceDataMask).build();
+		testReadWriteParcelForFilter(filter);
+
 		final byte[] manufacturerData = new byte[]{
 				0x02, 0x15
 		};

@@ -139,6 +139,49 @@ public final class ScanRecord {
 	}
 
 	/**
+	 * Returns the service data byte array associated with the {@code serviceDataUuid}. Returns
+	 * {@code null} if the {@code serviceDataUuid} is not found.
+	 * If {@code serviceDataUuid} and {@code serviceDataUuidMask} combination matches with more than 1
+	 * uuid in the serviceDataUuids list, ensure that the provided mask is specific enough to differentiate
+	 * between two very similar uuids (i.e. provide as many 1s/Fs as possible).
+	 */
+	@Nullable
+	public byte[] getServiceData(@NonNull final ParcelUuid serviceDataUuid,
+								 @Nullable final ParcelUuid serviceDataUuidMask) {
+		//noinspection ConstantConditions
+		if (serviceDataUuid == null || serviceData == null) {
+			return null;
+		} else {
+			if(serviceDataUuidMask == null) {
+				return getServiceData(serviceDataUuid);
+			}
+		}
+
+		byte[] data = null;
+		int count = 0;
+		StringBuilder logging = new StringBuilder();
+		for (Map.Entry<ParcelUuid, byte[]> entry: serviceData.entrySet()) {
+			if(ScanRecordMatchers.matchesServiceUuid(serviceDataUuid.getUuid(), serviceDataUuidMask.getUuid(), entry.getKey().getUuid())) {
+				data = entry.getValue();
+				logging.append("serviceDataUuid ");
+				logging.append(count);
+				logging.append(" = ");
+				logging.append(entry.getKey().getUuid());
+				logging.append(", ");
+				count++;
+			}
+		}
+
+		if(count > 1) {
+			Log.e("ScanRecord", count + " similar service data uuids were found in this ScanRecord; " +
+					"please provide more specific uuid mask or tackle duplication. " +
+					"ScanRecord data: " + logging);
+		}
+
+		return data;
+	}
+
+	/**
 	 * Returns the transmission power level of the packet in dBm. Returns {@link Integer#MIN_VALUE}
 	 * if the field is not set. This value can be used to calculate the path loss of a received
 	 * packet using the following equation:
